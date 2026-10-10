@@ -113,6 +113,30 @@ scripts/build-zip.sh /tmp/archify-contrib.zip
 
 Canonical ZIP bytes require official Node 22 with bundled zlib `1.3.1-e00f703` (for example, the official Node 22.23.2 distribution). The builder rejects other Node majors and zlib versions before staging or replacing an archive. A distribution linked against system zlib can produce different bytes even at the same Node version; check the actual executable with `node -p 'JSON.stringify({ executable: process.execPath, node: process.versions.node, zlib: process.versions.zlib })'`. This packaging constraint does not change the Skill runtime's supported Node range. When updating the canonical toolchain, review archive reproducibility and the committed ZIP together.
 
+The native Python package stager reads tracked working-tree files and index modes,
+excluding tests, caches and development dependencies. Its explicit new-file
+allowlist contains only `python/archify_runtime/browser.py` and
+`python/archify_runtime/integrity.py`, so these additions can be packaged before
+their first commit; arbitrary untracked files are never included. It materializes
+only the canonical `bin/archify -> archify.py` alias as a regular executable;
+other source symlinks are rejected. ZIP entry names, modes and timestamps are
+deterministic. Build-tool dependencies are not needed by the extracted Skill.
+
+For native package acceptance, use an interpreter with the Skill's declared
+Python requirements installed:
+
+```sh
+node --test scripts/test/package-build.test.mjs scripts/test/zip-format.test.mjs
+python3 scripts/package-smoke.py archify.zip
+```
+
+The smoke command extracts into a private directory outside the repository and
+runs all five modes through `finalize` and `check` using isolated Python and an
+empty executable `PATH`. It also checks browser-policy exits and the materialized
+CLI alias. Use `--out-dir <new-directory>` to retain HTML and receipts. This is a
+browser-free package simulation, not evidence from an actual DeepAgent image;
+record real image acceptance separately when a specific image is available.
+
 Skill runtime, schema, renderer, and published Skill-instruction changes require checking ZIP freshness. Bundled example or Viewer changes normally require a Gallery rebuild.
 
 List regenerated files and explain freshness when an affected output is left unchanged. Changes that do not affect generated outputs may omit that PR section. Resolve generated conflicts by rebuilding from combined source. Keep unrelated generated output out of the diff.

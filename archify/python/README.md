@@ -30,10 +30,16 @@ python3 archify/bin/archify.py render workflow archify/examples/agent-tool-call.
 python3 archify/bin/archify.py render sequence archify/examples/cache-miss-request.sequence.json reports/sequence.html --json
 ```
 
-All modes accept `validate`, `render`, `deliver`, and `finalize`, plus optional
-`--quality standard|showcase`. `validate` performs Schema, layout, and final SVG
-checks without writing an artifact. Exit codes are 0 for success, 1 for operation
-failure, and 2 for invalid arguments.
+All modes accept `validate`, `render`, `deliver`, `finalize`, and receipt-bound
+`check`, plus optional `--quality standard|showcase` and
+`--browser off|auto|required` (default `off`). `validate` performs Schema, layout, and final SVG
+checks without writing an artifact. HTML generation strictly inspects the final HTML/SVG, persists a
+`.python-delivery.json` receipt, and rereads the candidate, artifact and receipt
+to verify byte integrity. `check` verifies an existing delivery without rendering.
+Exit codes are 0 for policy success, 1 for operation or browser-gate failure,
+and 2 for invalid arguments. Browser status remains separate from static
+generation; `required` fails when browser inspection is skipped. `validate`
+cannot request a browser inspection. See [delivery contract](../references/delivery-contract.md).
 
 ## Architecture & Directory Layout
 
@@ -46,7 +52,7 @@ archify/
     archify_runtime/        # Native Python layout & rendering modules
       data/                 # Built-in brand marks, sigils, and i18n catalogs
     requirements.txt        # Python dependency specification
-    tests/                  # Pure Python test suite (59 tests)
+    tests/                  # Pure Python test suite
       fixtures/             # Self-contained diagram test fixtures
   schemas/                  # JSON Schemas for all diagram types
   assets/
@@ -63,5 +69,23 @@ python3 scripts/run_tests.py
 PYTHONPATH=archify/python python3 -m unittest discover -s archify/python/tests -v
 ```
 
-All 59 unit tests run with zero Node.js or external tool dependencies, including
+Static tests run with zero Node.js or browser dependencies, including
 isolated runtime packaging tests with an empty `PATH`.
+
+## Optional browser acceptance
+
+Ordinary DeepAgent images need only `requirements.txt`; no browser is discovered
+or launched by default. `--browser auto` reports missing Playwright/Chromium as
+`skipped`, while attempted browser failures exit 1. `--browser required` requires
+a passing inspection. Prepare a dedicated browser environment with the optional
+Python `playwright` package and its matching Chromium/OS dependencies. The helper
+checks desktop containment, projected semantic text, theme switching and page
+errors; it does not verify exports or every Viewer interaction.
+
+```sh
+python3 archify/bin/archify.py finalize workflow archify/examples/agent-tool-call.workflow.json reports/workflow.html --quality showcase --browser off --json
+python3 archify/bin/archify.py check workflow archify/examples/agent-tool-call.workflow.json reports/workflow.html --quality showcase --browser off --json
+```
+
+HTML and receipt publication is not a crash-atomic pair or the legacy production
+provenance journal. A crash can leave mismatched files, which `check` rejects.

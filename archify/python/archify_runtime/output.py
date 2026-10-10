@@ -51,7 +51,7 @@ def snapshot(target):
             metadata.st_ctime_ns, metadata.st_mode, hashlib.sha256(target.read_bytes()).digest())
 
 
-def publish(target, html, expected, command, receipt_id):
+def publish(target, html, expected, command, receipt_id, receipt=None, verifier=None):
     target.parent.mkdir(parents=True, exist_ok=True)
     lock = target.parent / ".archify-delivery-lock.json"
     candidate = None
@@ -80,6 +80,23 @@ def publish(target, html, expected, command, receipt_id):
             sidecar = target.with_suffix(suffix)
             if sidecar.exists() or sidecar.is_symlink():
                 fail("python/unsupported-feature", "Choose a new output: production delivery sidecars are not migrated by this prototype.", target)
+        sidecar = None
+        sidecar_expected = None
+        if receipt is not None:
+            from .integrity import CONTRACT, read_regular, receipt_path
+            import json
+            sidecar = receipt_path(target)
+            sidecar_expected = snapshot(sidecar)
+            if sidecar_expected is not None:
+                try:
+                    prior = json.loads(read_regular(sidecar))
+                except (ValueError, UnicodeError):
+                    fail("integrity/receipt-conflict", "Existing receipt is not an owned Python delivery receipt.", sidecar)
+                if (not isinstance(prior, dict) or prior.get("deliveryContract") != CONTRACT
+                        or prior.get("output") != str(target) or prior.get("input") != receipt["input"]
+                        or prior.get("type") != receipt["type"] or expected is None
+                        or prior.get("artifact") != {"sha256": expected[6].hex(), "bytes": expected[2]}):
+                    fail("integrity/receipt-conflict", "Existing receipt does not own the previous HTML.", sidecar)
         for parent in [target, *target.parents]:
             if parent.is_symlink():
                 fail("output/target-changed", "Output path changed before publication.", target)
@@ -101,6 +118,31 @@ def publish(target, html, expected, command, receipt_id):
             fail("output/target-changed", "Staged candidate changed before publication.", target)
         os.replace(candidate, target)
         candidate = None
+        if verifier is not None:
+            verified = verifier()
+            if receipt is not None:
+                receipt["artifactIntegrity"] = verified
+        if sidecar is not None:
+            if snapshot(sidecar) != sidecar_expected:
+                fail("integrity/receipt-conflict", "Receipt changed before publication.", sidecar)
+            content = (json.dumps(receipt, ensure_ascii=True, indent=2, allow_nan=False) + "\n").encode("utf-8")
+            descriptor, candidate = tempfile.mkstemp(prefix=".archify-python-", suffix=".json", dir=target.parent)
+            with os.fdopen(descriptor, "wb") as stream:
+                info = os.fstat(stream.fileno())
+                candidate_identity = (info.st_dev, info.st_ino)
+                stream.write(content)
+                stream.flush()
+                os.fsync(stream.fileno())
+            if snapshot(sidecar) != sidecar_expected:
+                fail("integrity/receipt-conflict", "Receipt changed before publication.", sidecar)
+            staged = Path(candidate).lstat()
+            if (staged.st_dev, staged.st_ino) != candidate_identity or staged.st_nlink != 1 or Path(candidate).read_bytes() != content:
+                fail("integrity/receipt-conflict", "Staged receipt changed before publication.", sidecar)
+            os.replace(candidate, sidecar)
+            candidate = None
+            if read_regular(sidecar) != content:
+                fail("integrity/receipt-mismatch", "Published receipt differs from the checked bytes.", sidecar)
+            verifier()
     finally:
         if candidate is not None:
             try:

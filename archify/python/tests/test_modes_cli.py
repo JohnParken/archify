@@ -90,7 +90,7 @@ class NativeModeCliTests(unittest.TestCase):
                     self.assertNotIn('id="archify-render-input"', html)
                     self.assertNotIn("archifyRender(", html)
                     if command == "deliver":
-                        self.assertEqual(receipt["deliveryContract"], "prototype-html-only")
+                        self.assertEqual(receipt["deliveryContract"], "python-static-v1")
 
     def test_schema_relationship_brand_failures_preserve_existing_output(self):
         source, example = self.read_example("dataflow")

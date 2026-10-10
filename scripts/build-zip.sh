@@ -11,8 +11,8 @@ out="${1:-$repo_root/archify.zip}"
 # This validation-only mode is read-only and does not create parent paths.
 node "$repo_root/scripts/write-deterministic-zip.mjs" --validate-output "$out"
 
-# Runtime consumers support every Node version declared by archify/package.json,
-# but canonical ZIP bytes depend on the Node/zlib toolchain. CI and releases use
+# The Python Skill runtime does not require Node. Canonical ZIP bytes depend
+# on this build-only Node/zlib toolchain. CI and releases use
 # official Node 22 with its bundled zlib. Distributions linked against a system
 # zlib can produce different bytes even at the same Node version.
 canonical_node_major=22

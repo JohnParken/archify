@@ -196,7 +196,7 @@ along the existing route, avoiding nodes, boundary titles, other labels and
 other routes within the resolved canvas. Explicit `labelAt`, `labelDx`, `labelDy`
 or `labelSegment` (including zero) disables this fallback. Routes and topology
 stay unchanged; if no nearby position is clear, validation reports the original
-collision. Inspect resolved labels with `--layout-json` before adding controls.
+collision. Inspect validation diagnostics and the rendered SVG before adding controls; the Python CLI does not support `--layout-json`.
 Standard placement retains its existing behavior.
 
 Spacing recommendations mean clear gap between boxes, not center distance. A 200px center distance between 165px-wide nodes leaves only 35px of clear gap.
@@ -220,21 +220,14 @@ semantic authoring choice, not a spacing repair. In workflow v2, let the compile
 allocate its measured mask before applying a diagnosed `labelAt`,
 `labelDx`/`labelDy`, or `labelSegment`. Apply one diagnosed geometry control at
 a time unless several edges share a constrained channel. In that case, plan the smallest coupled change from measured geometry and
-validate it together. Architecture/workflow provide layout evidence through
-`validate <type> <candidate.json> --layout-json`; for other types, use validation
-diagnostics and the rendered SVG geometry.
+validate it together. Use validation diagnostics and rendered SVG geometry for all types; the Python CLI does not emit the legacy layout receipt.
 Before adding manual routes, check whether unnecessary agent-added controls
 disable automatic port spread; preserve user-required route intent. Use the
 measured clearance rules above rather than guessing coordinates.
 
 ### Repair evidence
 
-For architecture, `validate architecture <input.json> --layout-json` exposes the
-resolved component boxes, boundary frames, connection points, and label positions.
-A measurable rejected layout also returns these fields, with `ok: false`,
-`contract: "archify-architecture-layout-v1"`, diagnostics, and exit 1. This is
-repair evidence, not artifact acceptance; it writes no HTML. Malformed input or
-an implementation failure retains the ordinary failure receipt without layout.
+For architecture, use the validation diagnostics and the final SVG for measured repair evidence. The Python CLI does not support the legacy `--layout-json` command or its standalone layout receipt.
 
 Use the measured failing side for `layout/boundary-out-of-bounds`. Left/top
 negative coordinates need an inward move; increasing viewBox width/height only
@@ -286,8 +279,7 @@ rendered frames and their node span before changing the source. Measurements
 are CSS pixels; space above/below nodes includes lane titles and routing, so it
 is not a removable-space budget. Frame IDs identify rendered lane indices.
 
-Run `validate workflow <source.json> --layout-json` and match those frames to
-source lanes and nodes. Check whether many steps share the last logical column
+Match rendered SVG frames and validation diagnostics to source lanes and nodes. Check whether many steps share the last logical column
 and use large `yOffset` values. Readable-v2 currently reserves symmetric space
 around offsets and shares the base content height between lanes, so increasing
 one offset can enlarge otherwise sparse lanes.
@@ -330,11 +322,7 @@ active state. A card saying “retry” is not topology.
 
 When the diagram must reflect real code, inspect repository entrypoints,
 runtime boundaries, storage, transports, and deployment configuration before
-authoring. Record only evidence you actually verified. `--repo-root <path>` is
-accepted by `render`, `validate`, `deliver`, and `preview` for every diagram
-type, by architecture `compare`, and by workflow `migrate`; every mode verifies `meta.repository` and
-node `sources` the same way. Migrating a source-backed workflow requires the same
-`--repo-root` so its candidate is verified before replacing the destination.
+authoring. Record only evidence you actually verified. The current Python CLI rejects `meta.repository` and node `sources`, and does not accept `--repo-root`; keep source verification and its citations in separate authoring evidence, outside the runnable candidate.
 Never infer runtime causality from file proximity
 or naming alone.
 
@@ -342,7 +330,7 @@ Declare `meta.repository.url` and one full 40-character `revision`, then attach
 `sources` to the mode's node collection (Architecture `components[]`, Workflow
 and Data Flow `nodes[]`, Sequence `participants[]`, Lifecycle `states[]`) with
 repository-relative `path`, optional `line`, `end_line`, and `label`.
-Verification reads blobs at that commit, independently of working-tree edits.
+During authoring, verify the cited blobs at that commit independently of working-tree edits; Python delivery does not perform that verification.
 Verification ignores local Git replacement refs, including those selected by
 `GIT_REPLACE_REF_BASE`, and always reads the original objects at the pinned SHA.
 It does not change repository configuration or delete replacement refs.

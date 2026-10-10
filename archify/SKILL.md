@@ -10,42 +10,43 @@ metadata:
 
 # Archify
 
-Create an interactive HTML diagram from typed JSON. Static output is the default; enable motion only when requested.
+Create a standalone interactive HTML diagram from typed JSON. Diagram layout and SVG generation run in Python; the Viewer runs in the recipient's browser. Static output is the default; enable motion only when requested.
 
-Run commands from your working directory. Unless the user names another location, give each new diagram request its own folder `.archify/<type>-<slug>-<YYYYMMDD-HHMMSS>/` there (local time, chosen once when the request starts): keep `candidate.json` and `<slug>.html` in it, set `meta.output` to that relative HTML path, and reuse the folder for every repair rerun. A later request gets a new folder, so earlier versions stay intact. Replace `bin/archify.py` in the commands below with the installed package's absolute path, or its path relative to your working directory; input and output paths resolve from that working directory.
+## Runtime and output
 
-For a real codebase, read [Repository authoring](references/repository-authoring.md) while tracing the requested behavior. A system description uses the steps below; an existing JSON uses the handoff path.
+Use Python 3.9+ with `python/requirements.txt` installed in the selected interpreter. The default generation path needs no Node.js or browser, including in LangChain DeepAgent containers. An import failure is an environment failure, not a diagram defect; install declared dependencies into the intended environment before retrying.
 
-## Existing candidate handoff
+Run commands from your working directory and replace `bin/archify.py` below with the package's absolute path. Give each new diagram its own `.archify/<type>-<slug>-<YYYYMMDD-HHMMSS>/` folder (local time, chosen once); keep `candidate.json`, `<slug>.html`, and its `.python-delivery.json` receipt together. Set `meta.output` to the relative HTML path and reuse the folder for repairs. Output paths must have no symbolic-link components. Inputs, artifacts, and receipts must be regular single-link files.
 
-When the user supplies a frozen candidate, run `finalize` first as one CLI invocation. Its passing receipt completes the automated gates; follow any visual review recommendation under Delivery before claiming visual quality. For repair, follow step 5.
+## Generation
 
-`finalize` includes a bounded update check in its delivery receipt; see Update awareness.
-
-## Fast authoring path
-
-Use this path for ordinary generation. Read branch references only when their stated trigger applies.
-
-1. Choose `architecture`, `workflow`, `sequence`, `dataflow`, or `lifecycle` from the question.
-2. Use the exact schema and example paths in the Type router without listing their directories. Read [Authoring defaults](references/authoring-defaults.md) and the mode's example in a bounded batch separate from project documents and complete schemas so neither is truncated; recover any missing section before writing. For Architecture, use the matching showcase example. For Sequence, Dataflow, and Lifecycle, also read the mode and common schemas. Read the relevant schema definition before choosing any new field, enum, or constrained text, especially boundary kinds. Examples teach shape, not facts. Use fresh IDs, wording, and layout. Go directly to the candidate without preliminary help, doctor, starter validation, temporary diagrams, or output-path listing. Query brands only for an explicitly requested mark; read [Brand marks](references/brand-marks.md) for an unknown mark with a user-provided URL.
-3. Once the requested scope and, for a real codebase, [source evidence](references/repository-authoring.md) are covered, write the complete candidate directly without planning coordinates in prose. Choose Architecture abstraction and connected placement using Authoring defaults before coordinates: show the main user journey and necessary branches, preserve control roles and behavior-changing conditions, and leave enough room for actual relationship labels. No node, relationship, source, view, card, or boundary count is a target or ceiling. Use automatic routes first; add explicit routing only for necessary branch, return, supplied geometry, or measured repair. Set `meta.quality_profile` to `"showcase"` unless the user requests dense `standard`.
-4. Once the complete first candidate is written, run `finalize` directly. Its first gate is showcase validation; successful first drafts need no separate pre-validation. Keep the candidate unchanged while the command runs:
+1. Choose a diagram type using the router below. For a frozen candidate, go directly to `finalize` without editing it.
+2. For a fresh candidate, read [Authoring defaults](references/authoring-defaults.md) and the mode's example in a bounded batch; recover truncated sections before writing. Read the mode and common schemas before using constrained fields. For a real codebase, inspect the relevant source using [Repository authoring](references/repository-authoring.md). The current Python CLI rejects `meta.repository` and node `sources` and does not support `--repo-root`; retain inspected repository evidence separately from the runnable candidate and disclose this limitation.
+3. Write the complete candidate. Examples teach field shape, not facts. Preserve requested topology, responsibilities, labels, direction, conditions, and source evidence; use fresh wording and IDs. For Architecture, choose connected placement using Authoring defaults before assigning coordinates. Start with automatic routes and use explicit routes only for necessary branches, returns, supplied geometry, or measured repair. Use `meta.quality_profile: "showcase"` unless the user requests dense `standard`.
+4. Run the complete generation command directly:
 
    ```bash
-   python3 bin/archify.py finalize <type> <candidate.json> <output.html> --quality showcase --json
+   python3 bin/archify.py finalize <type> <candidate.json> <output.html> --quality showcase --browser off --json
    ```
 
-   For a standalone candidate, you can also use `deliver` or `render`: `python3 bin/archify.py deliver <type> <candidate.json> <output.html> --quality showcase --json`.
+   `off` is also the CLI default. This validates the candidate, renders SVG, strictly checks the final HTML and embedded SVG, publishes HTML plus a Python delivery receipt, and rereads the input, artifact, and receipt to verify integrity. A passing result proves only the reported static checks and byte integrity. It never implies browser or visual acceptance.
+5. On non-zero exit, use `stage` and `diagnostics[]` to distinguish authoring, integrity, publication, and browser failures. Repair the named connected neighborhood while preserving meaning and rerun `finalize`. After two focused repairs fail, inspect measured geometry or the relevant contract; after one evidence-based retry, report the remaining gap. Never delete unknown receipts or locks to make a retry pass.
 
-   A passing receipt proves the included `validate`, `deliver`, strict `check`, and real-browser `browser-check` gates passed. Use its compact summary; run standalone commands only for a separate request or focused failure diagnosis.
+`render` and `deliver` use the same static publication and integrity path. `validate` checks the candidate and rendered SVG without writing an artifact. To verify an existing delivery without regenerating it:
 
-5. A non-zero exit is never success. Read compact stdout or `evidence.summaryReceipt`, then [repair the failed gate](references/delivery-contract.md#failed-finalize-and-candidate-repair), including its repair limit. Preserve requested meaning and source evidence. For several tangled Architecture routes, read [Architecture layout repair](references/architecture-layout-repair.md); for measured field or geometry failures, read [Authoring contract](references/authoring-contract.md). Edit the connected neighborhood and rerun the complete `finalize` command from step 4.
+```bash
+python3 bin/archify.py check <type> <candidate.json> <output.html> --quality showcase --browser off --json
+```
 
-## Update awareness
+`check` requires the matching `.python-delivery.json` receipt. Read [Delivery contract](references/delivery-contract.md) for receipt ownership, repeated delivery, failure recovery, and optional browser checks.
 
-`finalize` and standalone `deliver` include `update` in their receipts. Do not run a separate check for the same delivery. If `update.noticeRequired` is true, read `references/update-awareness.md` and keep one update line in your final response to the user, even after a quality gate fails. For a task with several diagrams, mention the update once in the final response. Snooze or ignore a reminder only when the user explicitly asks; never install or update on your own initiative.
+## Browser policy
 
-Before the first candidate, use the authoring references and relevant repository source, not Archify implementation or tests. Inspect Archify implementation if diagnostics remain unactionable after focused repairs.
+- `--browser off`: skip browser work explicitly; use for ordinary generation in browser-free containers.
+- `--browser auto`: inspect when optional Playwright and its Chromium binary are available. Missing dependencies yield `skipped`; actual startup, runtime, or measurement failures yield `failed` and a non-zero exit.
+- `--browser required`: browser inspection must pass. Missing dependencies also make the command exit non-zero, while retaining an otherwise valid generated static artifact and its receipt.
+
+Use `required` only for an explicitly requested browser acceptance task or a browser-capable CI gate. Do not install browser dependencies during ordinary generation. Browser results bind to the exact HTML bytes inspected, and report their measured scope. They do not prove export behavior or every Viewer interaction. Keep static and browser status separate when browser acceptance fails.
 
 ## Type router
 
@@ -69,41 +70,12 @@ Read Mermaid for topology and meaning, then author fresh Archify JSON; do not me
 - `sequenceDiagram` → `sequence`; participants become semantic participants and arrows become messages.
 - `stateDiagram` → `lifecycle`; states and transitions retain meaning, not Mermaid style.
 
-## Delivery
+## Viewer and visual review
 
-Use the `finalize` command above for the first candidate and after a repair.
+`meta.animation: "trace"` is opt-in. Read `references/viewer-runtime.md` when the user requests motion, Share Cards, deep links, presentation, search/focus, or other Viewer features. Viewer exports and interactions need their own browser verification; Python generation alone does not verify them.
 
-`finalize` stops at the first non-passing gate. Its compact stdout and `<output-stem>.finalize-summary.json` are ordinary evidence. A passing run creates no screenshots and reports `visualReview: "not-requested"`.
+Perceptual review is optional. If a user requests it, inspect the generated artifact in an available browser or image-capable workflow and record the actual scope. No screenshot or perceptual review is performed by this CLI. Report `visualReview: "not-requested"` unless a separate review actually occurred; disclose a requested review that could not run.
 
-When a passing Architecture receipt reports `visualReviewRecommendation.signals.resolvedCrossovers`, copy the candidate aside and apply the hints in one edit that changes only node positions and sizes: every node, relationship (including its `from` and `to`), label, and source stays as it was. Rerun the complete `finalize` once with `--out-dir <folder>/review-2`, because the previous HTML already owns its browser evidence. If that run fails or reports more crossings, restore the copy and finalize it with `--out-dir <folder>/review-3`. Do not start a second placement round. Hints about extra bends alone are optional.
+## Handoff
 
-When `layoutReviewRecommendation.action` is `inspect-sequence-width`, follow [Sequence width review](references/delivery-contract.md#sequence-width-review) before handing off a newly authored Sequence.
-
-Perceptual review is optional for ordinary generation, including a newly positioned Architecture. Use [Optional capture evidence](references/delivery-contract.md#optional-capture-evidence), with `--out-dir <folder>/visual-check`, when the user requests visual review, during development audits, or for a concrete route/browser concern. `visualReviewRecommendation` is advisory. Inspect captures before claiming visual quality; otherwise report automated checks only.
-
-Read [Delivery contract](references/delivery-contract.md) for failed gates, standalone commands, provenance/recovery, repeated delivery, exports, or opening. Recovery follows `deliver` → strict provenance `check` → `browser-check`; captures require strict provenance.
-
-For workflow viewport overflow, read [Workflow viewport repair](references/authoring-contract.md#workflow-viewport-repair) before the next layout edit.
-
-Report artifact checks, browser evidence, captures, and actual perceptual review as distinct results. For an explicitly requested immediate preview or active desktop loop, see [Optional opening](references/delivery-contract.md#optional-opening).
-
-## Optional viewer capabilities
-
-`meta.animation: "trace"` is opt-in.
-
-Read `references/viewer-runtime.md` only when the user explicitly asks for Share Cards, Route/Reach cards, motion, deep links, presentation, search/focus, or another Viewer Runtime feature.
-
-## Setup and fallback
-
-No install is required inside the skill package. For setup diagnosis, verify with:
-
-```bash
-python3 bin/archify.py validate sequence examples/cache-miss-request.sequence.json --json
-python3 bin/archify.py render sequence examples/cache-miss-request.sequence.json output.html --json
-```
-
-When shell access is unavailable, hand-place architecture SVG into `assets/template.html`, use CSS semantic classes rather than inline colors, and follow the visual review contract in `references/delivery-contract.md`.
-
-## Output
-
-Return the checked HTML as an absolute path, diagram type, validation summary, specification/artifact receipt, browser-evidence status, and truthful visual-review status. Do not claim success for a non-zero command or claim visual inspection you did not perform.
+Return the absolute HTML path, diagram type, `.python-delivery.json` path, static-check and artifact-integrity statuses, specification/artifact hashes, browser policy/status/reason, and truthful visual-review status. Summarize rather than copying the entire receipt. Do not claim a legacy “9/9 showcase” gate, browser acceptance, or production provenance transaction that this runtime does not implement. No update check, live installation change, or automatic opening is performed.
