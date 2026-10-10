@@ -6,13 +6,8 @@ does; `brand` explains whose product it is.
 
 ## Agent decision path
 
-1. Search the built-in catalogue when the request names a recognizable brand:
-
-   ```bash
-   node bin/archify.mjs brands "Claude" --json
-   ```
-
-2. Put the returned canonical ID in the node, participant, or state:
+1. Look up the built-in catalogue in `archify_runtime/data/brands.json` when the request names a recognizable brand:
+   Use the canonical ID (e.g. `"claude"`, `"github"`, `"python"`, `"aws"`, `"docker"`):
 
    ```json
    {
@@ -23,14 +18,7 @@ does; `brand` explains whose product it is.
    }
    ```
 
-3. If there is no catalogue match and the user supplied the official website,
-   capture its icon explicitly:
-
-   ```bash
-   node bin/archify.mjs brands capture "https://partner.example.com" --json
-   ```
-
-   Put the command's digest-pinned `brand` value in the authored node:
+2. Note: Remote URL capture is explicitly unsupported in the offline pure Python runtime (`python/unsupported-feature`). Use built-in brand IDs or standard semantic icons.
 
    ```json
    {
@@ -76,7 +64,7 @@ The final artifact never fetches a brand asset when opened. Preset vectors and
 digest-verified captured site icons remain embedded in SVG, PNG, WebP, JPEG,
 Share Card, and WebM exports.
 
-Use `node bin/archify.mjs brands --json` to inspect all canonical IDs, aliases,
+Inspect `archify/python/archify_runtime/data/brands.json` to view all canonical IDs, aliases,
 categories, domains, and provenance. Current categories cover AI, cloud,
 engineering, data, collaboration, business systems, channels, languages, and
 frameworks.

@@ -191,8 +191,7 @@ into a non-zero failure when the workflow requires a successfully delivered
 artifact:
 
 ```bash
-node bin/archify.mjs check <output.html> --require-provenance
-node bin/archify.mjs browser-check <output.html> --json --require-provenance
+python3 bin/archify.py validate <type> <candidate.json> --json
 ```
 
 ## Output path contracts
@@ -247,7 +246,7 @@ or prevent replacement of an existing artifact of the expected type.
 Use final verified delivery only after the candidate is frozen:
 
 ```bash
-node bin/archify.mjs deliver <type> <candidate.json> <output.html> --quality showcase --json
+python3 bin/archify.py deliver <type> <candidate.json> <output.html> --quality showcase --json
 ```
 
 Deliver reads the specification once, writes those exact bytes to a private same-directory candidate snapshot, renders that snapshot, runs the complete artifact checker, and only replaces the target after all artifact checks pass. The JSON receipt includes SHA-256 and byte counts for both `specification` and `artifact`.
@@ -255,7 +254,7 @@ Deliver reads the specification once, writes those exact bytes to a private same
 For the ordinary agent handoff path, prefer the finalizer:
 
 ```bash
-node bin/archify.mjs finalize <type> <candidate.json> <output.html> --quality showcase --json
+python3 bin/archify.py finalize <type> <candidate.json> <output.html> --quality showcase --json
 ```
 
 `finalize` invokes verified `deliver` once, reuses its embedded showcase
@@ -370,7 +369,7 @@ rerendering or modifying it. For focused diagnosis, the equivalent standalone
 command is:
 
 ```bash
-node bin/archify.mjs browser-check <output.html> --json --require-provenance
+python3 bin/archify.py validate <type> <candidate.json> --quality showcase --json
 ```
 
 The zero-dependency command uses Chrome/Chromium through the DevTools pipe. It
@@ -430,7 +429,7 @@ For a newly authored candidate with omitted `meta.column_fit` and no user-fixed 
 perceptual review:
 
 ```bash
-node bin/archify.mjs visual-check <output.html> --summary --require-provenance
+python3 bin/archify.py render <type> <candidate.json> <output.html> --quality showcase --json
 ```
 
 `--summary` returns compact JSON with all diagnostics and absolute paths to the complete receipt, contact sheet, and every screenshot. For a chosen visual review, inspect the relevant captures; capture success is not perceptual approval. `--json` retains the full receipt output for existing consumers. Both modes run the same checks and keep the same exit status. If cleanup fails after publication, the summary retains the final failure diagnostics and `publication` recovery details; the linked receipt records the earlier committed evidence.
@@ -493,8 +492,7 @@ a capable environment.
 Browser evidence belongs to exact artifact bytes. After editing a candidate whose previous HTML already has browser evidence, choose a fresh evidence directory before running the next `finalize`; this preserves the old receipts and captures without an avoidable ownership-conflict retry:
 
 ```bash
-node bin/archify.mjs finalize architecture candidate.json diagram.html --quality showcase --repo-root <root> --out-dir diagram.review-2 --json
-node bin/archify.mjs visual-check diagram.html --out-dir diagram.review-2 --summary --require-provenance
+python3 bin/archify.py finalize architecture candidate.json diagram.html --quality showcase --json
 ```
 
 Keep the requested HTML path stable. Use a new revision directory for each changed candidate, and retain the same directory for retries of unchanged bytes. For a diagram without repository evidence, omit `--repo-root`. Let the commands create their output directory. A prior validation failure that produced no HTML or browser evidence needs no new directory. Never remove unknown evidence to make a retry pass.
@@ -516,7 +514,7 @@ status proves only whether the local opener invocation succeeded.
 For an active desktop authoring loop only:
 
 ```bash
-node bin/archify.mjs preview <type> <input>.json <output>.html --quality showcase
+python3 bin/archify.py render <type> <input>.json <output>.html --quality showcase
 ```
 
 Preview watches one explicit input on loopback, binds each stable digest to a private snapshot, and advances only after the existing verified delivery pipeline passes. Invalid, half-written, deleted, or superseded input leaves the previous verified revision on screen and on disk. Identical bytes do not rebuild or reload.
