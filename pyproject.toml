@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "archify"
+version = "3.0.0"
+description = "Pure Python diagram layout, routing, and SVG generation engine for Archify."
+readme = "archify/python/README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+    { name = "tt-a1i" }
+]
+dependencies = [
+    "jsonschema>=4.20.0,<5.0.0",
+]
+
+[project.scripts]
+archify = "archify_runtime.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["archify/python"]
+
+[tool.setuptools.package-data]
+archify_runtime = [
+    "data/*.json",
+]

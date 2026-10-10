@@ -12,7 +12,7 @@ metadata:
 
 Create an interactive HTML diagram from typed JSON. Static output is the default; enable motion only when requested.
 
-Run commands from your working directory. Unless the user names another location, give each new diagram request its own folder `.archify/<type>-<slug>-<YYYYMMDD-HHMMSS>/` there (local time, chosen once when the request starts): keep `candidate.json` and `<slug>.html` in it, set `meta.output` to that relative HTML path, and reuse the folder for every repair rerun. A later request gets a new folder, so earlier versions stay intact. Replace `bin/archify.mjs` in the commands below with the installed package's absolute path, or its path relative to your working directory; input and output paths resolve from that working directory.
+Run commands from your working directory. Unless the user names another location, give each new diagram request its own folder `.archify/<type>-<slug>-<YYYYMMDD-HHMMSS>/` there (local time, chosen once when the request starts): keep `candidate.json` and `<slug>.html` in it, set `meta.output` to that relative HTML path, and reuse the folder for every repair rerun. A later request gets a new folder, so earlier versions stay intact. Replace `bin/archify.py` in the commands below with the installed package's absolute path, or its path relative to your working directory; input and output paths resolve from that working directory.
 
 For a real codebase, read [Repository authoring](references/repository-authoring.md) while tracing the requested behavior. A system description uses the steps below; an existing JSON uses the handoff path.
 
@@ -32,10 +32,10 @@ Use this path for ordinary generation. Read branch references only when their st
 4. Once the complete first candidate is written, run `finalize` directly. Its first gate is showcase validation; successful first drafts need no separate pre-validation. Keep the candidate unchanged while the command runs:
 
    ```bash
-   node bin/archify.mjs finalize <type> <candidate.json> <output.html> --quality showcase --json
+   python3 bin/archify.py finalize <type> <candidate.json> <output.html> --quality showcase --json
    ```
 
-   For a repository-backed candidate, include evidence on the first draft and use the complete first command: `node bin/archify.mjs finalize <type> <candidate.json> <output.html> --repo-root <repo-root> --quality showcase --json`.
+   For a standalone candidate, you can also use `deliver` or `render`: `python3 bin/archify.py deliver <type> <candidate.json> <output.html> --quality showcase --json`.
 
    A passing receipt proves the included `validate`, `deliver`, strict `check`, and real-browser `browser-check` gates passed. Use its compact summary; run standalone commands only for a separate request or focused failure diagnosis.
 
@@ -57,7 +57,7 @@ Before the first candidate, use the authoring references and relevant repository
 | `dataflow` | Pipelines, ETL/ELT, lineage, governance, consumers; where money or documents go | `schemas/dataflow.schema.json` | `examples/product-analytics.dataflow.json` |
 | `lifecycle` | State/status transitions, retries, waiting and terminal states; where an application or order stands | `schemas/lifecycle.schema.json` | `examples/deployment-release.lifecycle.json` |
 
-When ambiguous, run `node bin/archify.mjs guide "<scenario>" --json`. Scenario proof examples are structural references, not facts to copy.
+When ambiguous, check the examples in `examples/` for structural references. Scenario proof examples are structural references, not facts to copy.
 
 For an everyday subject, keep the same five modes and semantic types, then name them for the reader: use everyday `icon` values and `meta.legend` labels as in [Node icons](references/authoring-contract.md#node-icons). Ask for missing personal facts instead of inventing dates, amounts, or rules.
 
@@ -98,8 +98,8 @@ Read `references/viewer-runtime.md` only when the user explicitly asks for Share
 No install is required inside the skill package. For setup diagnosis, verify with:
 
 ```bash
-node bin/archify.mjs doctor
-node bin/archify.mjs demo <output-directory>
+python3 bin/archify.py validate sequence examples/cache-miss-request.sequence.json --json
+python3 bin/archify.py render sequence examples/cache-miss-request.sequence.json output.html --json
 ```
 
 When shell access is unavailable, hand-place architecture SVG into `assets/template.html`, use CSS semantic classes rather than inline colors, and follow the visual review contract in `references/delivery-contract.md`.
