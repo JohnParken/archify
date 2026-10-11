@@ -32,7 +32,7 @@ test('plugin is skill-only and does not declare native tools', () => {
   const init = read('__init__.py');
   assert.match(init, /register_skill\("archify"/);
   assert.doesNotMatch(init, /register_tool\(/);
-  assert.match(init, /node bin\/archify\.mjs/);
+  assert.match(init, /python3 bin\/archify\.py/);
   assert.match(init, /ARCHIFY_SKILL_ROOT/);
   assert.match(init, /HERMES_HOME/);
 });
@@ -60,12 +60,12 @@ assert calls[0][1]['description']
   assert.equal(path.resolve(result.stdout.trim()), path.join(repoRoot, 'archify', 'SKILL.md'));
 });
 
-test('docs stay community opt-in, cover Windows, and refuse a Python rewrite', () => {
+test('docs stay community opt-in, cover Windows, and describe the native Python runtime', () => {
   const docs = read('README.md');
   assert.match(docs, /not\*\* an official Nous Research/i);
   assert.match(docs, /Skill-only/);
-  assert.match(docs, /Node\.js 18\+/);
-  assert.match(docs, /no Python port/i);
+  assert.match(docs, /Python 3\.9\+/);
+  assert.match(docs, /natively in Python/i);
   assert.match(docs, /hermes skills install skills-sh\/tt-a1i\/archify\/archify -y/);
   assert.match(docs, /~\/\.hermes\/skills\/archify/);
   assert.match(docs, /skill_view\("archify:archify"\)/);

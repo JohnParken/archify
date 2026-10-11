@@ -15,7 +15,7 @@ PYTHON = os.environ.get("ARCHIFY_PYTHON", sys.executable)
 
 class NativePreflightTests(unittest.TestCase):
     def run_python(self, mode, doc, command="validate", preserve=False):
-        with tempfile.TemporaryDirectory(prefix="archify-native-preflight-", dir=str(Path("/tmp").resolve())) as directory:
+        with tempfile.TemporaryDirectory(prefix="archify-native-preflight-", dir=str(Path(tempfile.gettempdir()).resolve())) as directory:
             directory = Path(directory)
             source = directory / "input.json"
             source.write_text(json.dumps(doc, ensure_ascii=False), encoding="utf-8")

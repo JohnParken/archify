@@ -44,15 +44,22 @@ python3 bin/archify.py check <type> <candidate.json> <output.html> --quality sho
 
 `check` requires the Python receipt, verifies its contract/type/paths and input/HTML hashes, checks the final HTML/SVG again, and rereads the files and receipt before accepting them. Missing, malformed, mismatched or unsafe receipts fail closed. A requested profile must match the SVG. `check --browser required` independently adds browser acceptance of the existing bytes; it reports that result to stdout without rewriting the delivery receipt.
 
-These hashes establish local consistency, not signed authenticity or repository-source correctness. An actor able to rewrite both artifact and receipt can forge their consistency. The CLI rejects `meta.repository` and node `sources` and does not support `--repo-root`; retain verified source citations outside the runnable candidate.
+These hashes establish local consistency, not signed authenticity or repository-source correctness. An actor able to rewrite both artifact and receipt can forge their consistency. Repository evidence is independently verified with `--repo-root` against pinned commit objects, including origin identity, path/blob type and source line ranges. Git is required only for this evidence feature; remote access is never needed.
 
 ## Publication and repeated delivery
 
-Inputs, artifacts and receipts must be regular single-link files. Output paths must have no symlink components. All HTML publishers share `.archify-delivery-lock.json` in the output directory, so run writes to that directory serially. `check` refuses an existing lock or legacy pending journal.
+Inputs, artifacts and receipts must be regular single-link files. Output directory aliases are resolved to physical paths; output files must not be symlinks. All HTML publishers share `.archify-delivery-lock.json` in the output directory, so run writes to that directory serially. `check` refuses an existing lock or legacy pending journal.
 
-An existing Python receipt can be replaced only when it identifies the same candidate path, diagram type and output path and its artifact identity matches the previous HTML. An unknown receipt, symlink, hard link, concurrent change or foreign owner is a conflict; preserve it and use another output path. Existing legacy `.delivery.json` or `.delivery-pending.json` sidecars are not migrated and block publication.
+An existing Python receipt can be replaced only when it identifies the same candidate path, diagram type and output path and its artifact identity matches the previous HTML. An unknown receipt, symlink, hard link, concurrent change or foreign owner is a conflict; preserve it and use another output path. Publications also write a `.delivery.json` compatibility receipt; compare additionally writes `.receipt.json`. Unknown legacy receipts remain conflicts. A `.delivery-pending.json` journal blocks publication until recovery. Explicitly selected regular HTML outputs may be replaced when no conflicting receipt exists.
 
-HTML and receipt are staged, flushed and individually replaced, then reread under the directory mutex. This is not the legacy production provenance journal transaction, a crash-atomic HTML/receipt pair, or a distributed lock. An interruption can leave new HTML with an old or absent receipt; `check` rejects that mismatch. A reported integrity failure may leave an artifact on disk and must not be presented as success. Use a separate output for recovery when ownership cannot be established. Do not remove unknown locks or receipt files automatically.
+HTML and receipts are staged and flushed before an owned recovery journal is
+published. Each target is replaced and verified; the commit decision is flushed
+before lock cleanup. The journal is retired last. After a process exits,
+`archify recover <output.html> --json` rolls back an uncommitted transaction or
+finishes a recorded commit/rollback. It refuses live owners, unknown lock owners,
+changed targets and altered backups. This is recoverable publication, not a
+crash-atomic pair, distributed lock or signed authenticity. Files visible during
+an interrupted transaction are not accepted by `check`.
 
 ## Browser policy
 
@@ -84,15 +91,15 @@ Set `meta.output` to a portable POSIX-relative `.html` path beneath the working 
 
 ## Sequence width review
 
-Preserve frozen candidate geometry. For a fresh sequence, use the mode schema and authoring defaults to choose column fitting. This runtime reports static diagnostics; it does not emit the legacy `layoutReviewRecommendation` or accept `--out-dir`.
+Preserve frozen candidate geometry. For a fresh sequence, use the mode schema and authoring defaults to choose column fitting. This runtime reports static diagnostics; it does not emit the legacy `layoutReviewRecommendation` and accepts `--out-dir` for an explicit output folder.
 
 ## Optional capture evidence
 
-The current Python CLI has no `visual-check` command. Screenshots and perceptual inspection need a separate available browser workflow, bound to the delivered HTML hash. Capture success alone is not perceptual approval.
+`browser-check <output.html>` and `visual-check <output.html>` require automated browser checks of the recorded artifact. Perceptual approval remains a separate human judgement; automated capture success never establishes it.
 
 ## Optional opening
 
-The CLI does not implement `--open` or live preview. Open the delivered HTML separately when the user requests a preview. Opening is not validation evidence.
+`--open` explicitly opens the generated artifact in the default browser. Opening is not validation evidence.
 
 ## Handoff receipt
 

@@ -16,12 +16,12 @@ Create a standalone interactive HTML diagram from typed JSON. Diagram layout and
 
 Use Python 3.9+ with `python/requirements.txt` installed in the selected interpreter. The default generation path needs no Node.js or browser, including in LangChain DeepAgent containers. An import failure is an environment failure, not a diagram defect; install declared dependencies into the intended environment before retrying.
 
-Run commands from your working directory and replace `bin/archify.py` below with the package's absolute path. Give each new diagram its own `.archify/<type>-<slug>-<YYYYMMDD-HHMMSS>/` folder (local time, chosen once); keep `candidate.json`, `<slug>.html`, and its `.python-delivery.json` receipt together. Set `meta.output` to the relative HTML path and reuse the folder for repairs. Output paths must have no symbolic-link components. Inputs, artifacts, and receipts must be regular single-link files.
+Run commands from your working directory and replace `bin/archify.py` below with the package's absolute path. Give each new diagram its own `.archify/<type>-<slug>-<YYYYMMDD-HHMMSS>/` folder (local time, chosen once); keep `candidate.json`, `<slug>.html`, and its `.python-delivery.json` receipt together. Set `meta.output` to the relative HTML path and reuse the folder for repairs. Output directory aliases are resolved to physical paths; output files must not be symbolic links. Inputs, artifacts, and receipts must be regular single-link files.
 
 ## Generation
 
 1. Choose a diagram type using the router below. For a frozen candidate, go directly to `finalize` without editing it.
-2. For a fresh candidate, read [Authoring defaults](references/authoring-defaults.md) and the mode's example in a bounded batch; recover truncated sections before writing. Read the mode and common schemas before using constrained fields. For a real codebase, inspect the relevant source using [Repository authoring](references/repository-authoring.md). The current Python CLI rejects `meta.repository` and node `sources` and does not support `--repo-root`; retain inspected repository evidence separately from the runnable candidate and disclose this limitation.
+2. For a fresh candidate, read [Authoring defaults](references/authoring-defaults.md) and the mode's example in a bounded batch; recover truncated sections before writing. Read the mode and common schemas before using constrained fields. For a real codebase, inspect the relevant source using [Repository authoring](references/repository-authoring.md). For repository-backed diagrams, author a full pinned commit in `meta.repository` and node `sources`, then pass `--repo-root <local-checkout>`. Verification reads committed Git blobs without contacting the remote; dirty working files are not evidence.
 3. Write the complete candidate. Examples teach field shape, not facts. Preserve requested topology, responsibilities, labels, direction, conditions, and source evidence; use fresh wording and IDs. For Architecture, choose connected placement using Authoring defaults before assigning coordinates. Start with automatic routes and use explicit routes only for necessary branches, returns, supplied geometry, or measured repair. Use `meta.quality_profile: "showcase"` unless the user requests dense `standard`.
 4. Run the complete generation command directly:
 
@@ -38,7 +38,7 @@ Run commands from your working directory and replace `bin/archify.py` below with
 python3 bin/archify.py check <type> <candidate.json> <output.html> --quality showcase --browser off --json
 ```
 
-`check` requires the matching `.python-delivery.json` receipt. Read [Delivery contract](references/delivery-contract.md) for receipt ownership, repeated delivery, failure recovery, and optional browser checks.
+`check` requires the matching `.python-delivery.json` receipt; `check <output.html>` also infers the recorded type and candidate. Read [Delivery contract](references/delivery-contract.md) for receipt ownership, repeated delivery, failure recovery, and optional browser checks.
 
 ## Browser policy
 
@@ -79,3 +79,23 @@ Perceptual review is optional. If a user requests it, inspect the generated arti
 ## Handoff
 
 Return the absolute HTML path, diagram type, `.python-delivery.json` path, static-check and artifact-integrity statuses, specification/artifact hashes, browser policy/status/reason, and truthful visual-review status. Summarize rather than copying the entire receipt. Do not claim a legacy “9/9 showcase” gate, browser acceptance, or production provenance transaction that this runtime does not implement. No update check, live installation change, or automatic opening is performed.
+
+## Architecture comparison and recovery
+
+`python3 bin/archify.py compare architecture <base.json> <head.json> <delta.html> --json`
+compares stable component and relationship IDs, preserves removed geometry, and
+provides Before/Delta/After views, guided review, theme and SVG/PNG exports.
+Semantic changes, source-evidence changes and geometry changes are separate.
+Pass `--repo-root` to verify pinned repository evidence on both snapshots. An
+`authored` result does not establish runtime impact or source correctness.
+
+All publishers flush an owned journal before replacing HTML and receipts.
+After an interrupted process exits, run `python3 bin/archify.py recover <output.html> --json`.
+Recovery rolls back an uncommitted attempt or finishes a recorded commit. It
+refuses live owners, changed targets and foreign locks. Never delete unknown
+files to unblock a retry. This is a recoverable transaction, not a crash-atomic
+pair or signed provenance. `--receipt` adds a transaction-bound JSON receipt.
+
+Installed wheels provide an `archify` console command and bundled schemas and
+Viewer resources. `node bin/archify.mjs ...` remains a compatibility launcher;
+set `ARCHIFY_PYTHON` when Python is not on PATH. Node is optional for generation.

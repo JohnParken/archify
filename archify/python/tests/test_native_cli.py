@@ -20,7 +20,7 @@ RELATIONS = {"dataflow": "flows", "lifecycle": "transitions", "architecture": "c
 
 class NativeCliTests(unittest.TestCase):
     def setUp(self):
-        self.temp = tempfile.TemporaryDirectory(prefix="archify-native-cli-", dir=str(Path("/tmp").resolve()))
+        self.temp = tempfile.TemporaryDirectory(prefix="archify-native-cli-", dir=str(Path(tempfile.gettempdir()).resolve()))
         self.dir = Path(self.temp.name)
 
     def tearDown(self):

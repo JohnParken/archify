@@ -357,7 +357,8 @@ class WorkflowRenderer:
             rows.append({"text": node.get("sublabel"), "font": sub_font, "y": 38})
         if node.get("tag"):
             rows.append({"text": node.get("tag"), "font": tag_font, "y": node["height"] - 12})
-        label_layout = node_label_layout(node["width"], node["height"], rows, brand=bool(mark))
+        label_layout = node_label_layout(node["width"], node["height"], rows,
+                                         brand=bool(mark), source=bool(node.get("sources")))
         sub = (f'\n          <text data-detail="context" x="{number(node["cx"])}" y="{number(node["y"] + label_layout["ys"][1])}" '
                f'class="t-muted" font-size="{number(sub_font)}" text-anchor="middle">{esc(node.get("sublabel"))}</text>') if has_sub else ""
         tag_index = 2 if has_sub else 1

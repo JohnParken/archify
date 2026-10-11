@@ -43,7 +43,7 @@ class SequenceCliTests(unittest.TestCase):
     def setUp(self):
         if not PYTHON.is_file():
             self.skipTest(f"prototype interpreter is not installed: {PYTHON}")
-        self.temp = tempfile.TemporaryDirectory(prefix="archify-parity-", dir=str(Path("/tmp").resolve()))
+        self.temp = tempfile.TemporaryDirectory(prefix="archify-parity-", dir=str(Path(tempfile.gettempdir()).resolve()))
         self.dir = Path(self.temp.name)
 
     def tearDown(self):
@@ -260,7 +260,7 @@ class SequenceCliTests(unittest.TestCase):
         python = self.receipt(self.run_cli("validate", source, None, "--json"), "validate", False)
         self.assertEqual(python["diagnostics"][0]["code"], "output/meta-path-syntax")
 
-    def test_repository_evidence_and_remote_brands_fail_as_explicitly_unsupported(self):
+    def test_invalid_repository_and_unsupported_remote_brand_are_explicit(self):
         repository = sequence()
         repository["meta"]["repository"] = {"url": "https://example.test/repo", "revision": "a" * 40}
         remote_brand = sequence()
@@ -268,7 +268,7 @@ class SequenceCliTests(unittest.TestCase):
         for name, doc in (("repository", repository), ("remote-brand", remote_brand)):
             source = self.write_doc(doc, name + ".json")
             receipt = self.receipt(self.run_cli("validate", source, None, "--json"), "validate", False)
-            self.assertEqual({entry["code"] for entry in receipt["diagnostics"]}, {"python/unsupported-feature"})
+            self.assertEqual({entry["code"] for entry in receipt["diagnostics"]}, {"repository-evidence/links-unsupported" if name == "repository" else "python/unsupported-feature"})
 
     def test_unknown_and_unpinned_brands_match_node_diagnostic_codes(self):
         cases = (
@@ -323,7 +323,7 @@ class SequenceCliTests(unittest.TestCase):
         sidecar.write_text('{"schemaVersion":1,"status":"current"}', encoding="utf-8")
         result = self.run_cli("deliver", source, output, "--json")
         receipt = self.receipt(result, "deliver", False)
-        self.assertIn("python/unsupported-feature", {item["code"] for item in receipt["diagnostics"]})
+        self.assertIn("integrity/receipt-conflict", {item["code"] for item in receipt["diagnostics"]})
         self.assertEqual(output.read_text(encoding="utf-8"), "prior artifact")
         self.assertEqual(sidecar.read_text(encoding="utf-8"), '{"schemaVersion":1,"status":"current"}')
 

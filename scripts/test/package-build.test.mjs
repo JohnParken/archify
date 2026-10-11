@@ -141,7 +141,7 @@ test('publishArchive preserves output symlink/hardlink targets and rejects a for
   assert.equal(fs.existsSync(ordinaryOutput), false);
 });
 
-test('includes only the two exact untracked Python runtime additions and materializes the internal alias', () => {
+test('includes only the exact untracked Python runtime additions and materializes the internal alias', () => {
   const root = fixture();
   const write = (relative, content) => {
     const file = path.join(root, relative);
@@ -157,7 +157,11 @@ test('includes only the two exact untracked Python runtime additions and materia
   git(root, ['add', '--', 'archify/bin/archify.py', 'archify/bin/archify', 'archify/python/requirements.txt', 'archify/assets/template.html', 'archify/schemas/common.schema.json']);
   write('archify/python/archify_runtime/browser.py', 'browser = True\n');
   write('archify/python/archify_runtime/integrity.py', 'integrity = True\n');
+  for (const name of ['cli', 'resources', 'delivery', 'repository', 'comparison', 'commands']) write(`archify/python/archify_runtime/${name}.py`, `${name} = True\n`);
+  write('archify/bin/archify.mjs', '// Python compatibility launcher\n');
+  write('archify/python/requirements-browser.txt', 'playwright==1.63.0\n');
   write('archify/python/archify_runtime/extra.py', 'private = True\n');
+  write('work/private-analysis.txt', 'not part of the Skill\n');
 
   const { destination, result } = stage(root, 'python-stage');
   assert.equal(fs.readFileSync(path.join(destination, 'bin/archify'), 'utf8'), fs.readFileSync(path.join(destination, 'bin/archify.py'), 'utf8'));
@@ -165,7 +169,13 @@ test('includes only the two exact untracked Python runtime additions and materia
   assert.equal(result.modes[`${path.basename(destination)}/bin/archify`], '100755');
   assert.equal(fs.readFileSync(path.join(destination, 'python/archify_runtime/browser.py'), 'utf8'), 'browser = True\n');
   assert.equal(fs.readFileSync(path.join(destination, 'python/archify_runtime/integrity.py'), 'utf8'), 'integrity = True\n');
+  for (const name of ['cli', 'resources', 'delivery', 'repository', 'comparison', 'commands']) {
+    assert.equal(fs.readFileSync(path.join(destination, `python/archify_runtime/${name}.py`), 'utf8'), `${name} = True\n`);
+  }
+  assert.equal(fs.readFileSync(path.join(destination, 'bin/archify.mjs'), 'utf8'), '// Python compatibility launcher\n');
+  assert.equal(fs.readFileSync(path.join(destination, 'python/requirements-browser.txt'), 'utf8'), 'playwright==1.63.0\n');
   assert.equal(fs.existsSync(path.join(destination, 'python/archify_runtime/extra.py')), false);
+  assert.equal(fs.existsSync(path.join(destination, 'work/private-analysis.txt')), false);
 
   fs.unlinkSync(path.join(root, 'archify/bin/archify'));
   fs.symlinkSync('../../outside.py', path.join(root, 'archify/bin/archify'));

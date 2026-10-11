@@ -1,0 +1,16 @@
+include pyproject.toml
+include setup.py
+include archify/python/README.md
+include archify/python/archify_runtime/*.py
+recursive-include archify/python/archify_runtime/data *.json
+include archify/schemas/common.schema.json
+include archify/schemas/sequence.schema.json
+include archify/schemas/dataflow.schema.json
+include archify/schemas/lifecycle.schema.json
+include archify/schemas/architecture.schema.json
+include archify/schemas/workflow.schema.json
+include archify/assets/template.html
+include archify/LICENSE
+include archify/THIRD_PARTY_NOTICES.md
+prune archify/python/tests
+global-exclude __pycache__ *.py[cod]

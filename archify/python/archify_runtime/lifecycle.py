@@ -551,7 +551,8 @@ class LifecycleRenderer:
             text_rows.append({"text": state["tag"], "font": sizes["tag"], "y": state["height"] - (12 if self.is_v2 else 11)})
         mark = resolve_brand(state.get("brand"))
         label_layout = node_label_layout(state["width"], state["height"], text_rows,
-            side="left", brand=bool(mark), source=False, step=state.get("step") or "")
+            side="left", brand=bool(mark), source=bool(state.get("sources")),
+            step=state.get("step") or "")
         sub = (f'\n          <text data-detail="context" x="{number(state["cx"])}" y="{number(state["y"] + label_layout["ys"][1])}" class="t-muted" font-size="{number(sizes["sublabel"])}" text-anchor="middle">{esc(state["sublabel"])}</text>' if has_sub else "")
         tag_index = 2 if has_sub else 1
         tag = (f'\n        <text data-detail="fine" x="{number(state["cx"])}" y="{number(state["y"] + label_layout["ys"][tag_index])}" class="{accent}" font-size="{number(sizes["tag"])}" text-anchor="middle">{esc(state["tag"])}</text>' if state.get("tag") else "")

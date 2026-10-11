@@ -87,5 +87,34 @@ python3 archify/bin/archify.py finalize workflow archify/examples/agent-tool-cal
 python3 archify/bin/archify.py check workflow archify/examples/agent-tool-call.workflow.json reports/workflow.html --quality showcase --browser off --json
 ```
 
-HTML and receipt publication is not a crash-atomic pair or the legacy production
-provenance journal. A crash can leave mismatched files, which `check` rejects.
+HTML and receipts use a flushed recovery journal and owned directory locks.
+`archify recover output.html --json` rolls back an interrupted uncommitted
+publication or finishes a recorded commit. Unknown files and live owners are
+preserved. This is recoverable publication, not crash-atomic or signed provenance.
+
+## Installed package and migrated commands
+
+Build a wheel/sdist with `python -m build`; install the wheel to obtain `archify`.
+Schemas, the offline Viewer and attribution files are included in the wheel.
+The source launchers `python bin/archify.py` and `node bin/archify.mjs` retain
+existing calling forms. The latter delegates to Python (`ARCHIFY_PYTHON`).
+
+Repository-backed candidates use `--repo-root`, a full commit SHA and node
+`sources`. Git verifies origin identity, regular committed blobs and line ranges;
+no remote requests or worktree file reads are used as proof.
+
+```sh
+archify compare architecture base.json head.json delta.html --receipt delta.receipt.json --json
+archify check delta.html --require-provenance --json
+```
+
+Comparison distinguishes semantic, evidence, topology and geometry changes,
+provides three snapshots and guided review, and exports SVG/PNG. It does not
+infer runtime impact. `--candidate-sha256` binds the expected SHA256 of the raw
+head input bytes; `--receipt` is part of the publication transaction. A required
+browser gate failure retains statically checked HTML and a failed delivery
+receipt, then exits 1. `--open` explicitly opens a preview.
+
+CI runs static/distribution tests on Python 3.9–3.13 and Linux/macOS/Windows.
+Opt in to the real Viewer tests with `ARCHIFY_BROWSER_TESTS=1`; they cover all
+five modes, offline loading, focus/reach, themes, errors and SVG/PNG downloads.

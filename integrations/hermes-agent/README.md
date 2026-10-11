@@ -2,19 +2,19 @@
 
 Community [Hermes Agent](https://hermes-agent.nousresearch.com/) integration for [Archify](https://github.com/tt-a1i/archify). This is **not** an official Nous Research product and does not imply Nous endorsement.
 
-This is a **Skill-only** plugin. It does not register native Python render tools, telemetry, MCP servers, credentials handling, or background services. Hermes still needs **Node.js 18+**. The compiler remains `node bin/archify.mjs`.
+This is a **Skill-only** plugin. It does not register native Python render tools, telemetry, MCP servers, credentials handling, or background services. Hermes needs **Python 3.9+** and the declared `python/requirements.txt` dependencies. The compiler is `python3 bin/archify.py`; `node bin/archify.mjs` remains an optional compatibility launcher.
 
-There is no Python port of the renderers. A Python assistant uses Archify the same way Cursor does: author typed JSON, then run the Node CLI. Hermes is not an agent-switcher target.
+The renderers run natively in Python. A Python assistant authors typed JSON, then runs the Python CLI. Hermes is not an agent-switcher target.
 
 ## Install (shows up in available skills)
 
-This command installs the published Skill from [`tt-a1i/archify`](https://github.com/tt-a1i/archify) (`archify/SKILL.md` plus the Node renderer). Hermes already indexes that package as `skills-sh/tt-a1i/archify/archify`. After this repository's Hermes docs land on `main`, keep using the same identifier; `skills.sh` may lag a few hours behind GitHub.
+This command installs the published Skill from [`tt-a1i/archify`](https://github.com/tt-a1i/archify) (`archify/SKILL.md` plus the Python runtime). Hermes already indexes that package as `skills-sh/tt-a1i/archify/archify`. After this repository's Hermes docs land on `main`, keep using the same identifier; `skills.sh` may lag a few hours behind GitHub.
 
 ```bash
 hermes skills install skills-sh/tt-a1i/archify/archify -y
 ```
 
-Requires Node.js 18+ on the machine (or in the Hermes Docker image). Restart Hermes, then ask:
+Requires Python 3.9+ and jsonschema on the machine (or in the Hermes Docker image). Restart Hermes, then ask:
 
 ```text
 Use the archify skill to map this repository's runtime architecture.
@@ -23,7 +23,7 @@ Put supporting detail in cards instead of adding more edges.
 After delivery, return the exact workspace paths of the specification JSON and the HTML artifact.
 ```
 
-Run `node bin/archify.mjs` from the installed Skill directory (`~/.hermes/skills/archify` or `%USERPROFILE%\.hermes\skills\archify`), or pass absolute paths.
+Run `python3 bin/archify.py` from the installed Skill directory (`~/.hermes/skills/archify` or `%USERPROFILE%\.hermes\skills\archify`), or pass absolute paths.
 
 If `hermes skills inspect skills-sh/tt-a1i/archify/archify` cannot resolve the identifier, wait for the skills.sh index or use the checkout symlink below. Do not invent a different owner/repo path: forks are different packages.
 

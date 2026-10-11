@@ -115,9 +115,10 @@ Canonical ZIP bytes require official Node 22 with bundled zlib `1.3.1-e00f703` (
 
 The native Python package stager reads tracked working-tree files and index modes,
 excluding tests, caches and development dependencies. Its explicit new-file
-allowlist contains only `python/archify_runtime/browser.py` and
-`python/archify_runtime/integrity.py`, so these additions can be packaged before
-their first commit; arbitrary untracked files are never included. It materializes
+allowlist is maintained in `scripts/stage-clean-skill.mjs` and covers the named
+Python runtime migration additions, the Node compatibility launcher and optional
+browser requirements before their first commit. Keep it limited to those exact
+paths; arbitrary untracked files are never included. It materializes
 only the canonical `bin/archify -> archify.py` alias as a regular executable;
 other source symlinks are rejected. ZIP entry names, modes and timestamps are
 deterministic. Build-tool dependencies are not needed by the extracted Skill.

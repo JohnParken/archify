@@ -88,7 +88,8 @@ test('homepage version labels and translations match the release identity baseli
   const baseline = parse(read(docs, 'index.html'));
   const generated = parse(read(dist, 'index.html'));
   // The redesigned eyebrow separates the version chip from its channel label.
-  const version = JSON.parse(read(path.resolve(root, '../archify'), 'package.json')).version;
+  const release = JSON.parse(read(path.resolve(root, '../archify'), 'skill-release.json'));
+  const version = release.version;
   const spans = elements(generated, 'span');
   const badge = spans.find(node => attr(node, 'data-i18n') === 'hero-badge');
   assert.equal(semantic(badge).children.join(' '), "Stable Agent Skill · see what's new");

@@ -6,11 +6,15 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { readRegular, validatePortableNames } from './package-files.mjs';
 
-// These two runtime additions are intentionally permitted before their first commit.
+// These exact runtime additions are permitted before their first commit.
 // All other untracked content, including tests, caches and generated diagrams, is excluded.
-const EXTRA_RUNTIME_FILES = ['archify/python/archify_runtime/browser.py', 'archify/python/archify_runtime/integrity.py'];
+const EXTRA_RUNTIME_FILES = ['archify/python/archify_runtime/browser.py', 'archify/python/archify_runtime/integrity.py',
+  'archify/python/archify_runtime/cli.py', 'archify/python/archify_runtime/resources.py',
+  'archify/python/archify_runtime/delivery.py', 'archify/python/archify_runtime/repository.py',
+  'archify/python/archify_runtime/comparison.py', 'archify/python/archify_runtime/commands.py',
+  'archify/bin/archify.mjs', 'archify/python/requirements-browser.txt'];
 const EXCLUDED_SEGMENTS = new Set(['test', 'tests', '__pycache__', 'node_modules', '.DS_Store', '.hive', '.workbuddy', '.archify']);
-const EXCLUDED_FILES = new Set(['archify/package-lock.json', 'archify/scripts/generate-brand-marks.mjs', 'archify/scripts/generate-validators.mjs']);
+const EXCLUDED_FILES = new Set(['archify/package-lock.json', 'archify/python/requirements-build.txt', 'archify/scripts/generate-brand-marks.mjs', 'archify/scripts/generate-validators.mjs']);
 const REQUIRED = ['archify/SKILL.md', 'archify/LICENSE', 'archify/THIRD_PARTY_NOTICES.md', 'archify/skill-release.json'];
 
 function trackedEntries(root) {

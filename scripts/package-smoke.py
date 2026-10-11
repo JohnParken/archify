@@ -94,6 +94,26 @@ def run(archive, directory):
     for policy in ("auto", "required"):
         invoke("finalize", "sequence", source, work / ("browser-" + policy + ".html"), policy)
     invoke("finalize", "sequence", source, work / "alias.html", entry="archify")
+    # Exercise the migrated comparison and output-only compatibility forms.
+    delta = work / "delta.html"
+    comparison = [sys.executable, "-I", str(skill / "bin/archify.py"), "compare", "architecture",
+                  str(skill / "examples/checkout-platform.base.architecture.json"),
+                  str(skill / "examples/checkout-platform.head.architecture.json"), str(delta), "--json"]
+    for arguments in (comparison, [sys.executable, "-I", str(skill / "bin/archify.py"),
+                                  "check", str(delta), "--require-provenance", "--json"]):
+        process = subprocess.run(arguments, cwd=work, env=environment, text=True, capture_output=True, timeout=30)
+        receipt = json.loads(process.stdout)
+        if process.returncode != 0 or not receipt.get("ok") or process.stderr:
+            raise AssertionError(receipt)
+        results.append({"type": "architecture", "command": arguments[4], "exit": process.returncode,
+                        "output": str(delta), "commandLine": arguments})
+    previous = (work / "sequence/sequence.html").read_bytes()
+    guarded = [sys.executable, "-I", str(skill / "bin/archify.py"), "finalize", "sequence", str(source),
+               str(work / "sequence/sequence.html"), "--candidate-sha256", "0" * 64, "--json"]
+    process = subprocess.run(guarded, cwd=work, env=environment, text=True, capture_output=True, timeout=30)
+    if process.returncode != 1 or (work / "sequence/sequence.html").read_bytes() != previous:
+        raise AssertionError("candidate hash guard must preserve the previous artifact")
+    results.append({"type": "sequence", "command": "candidate-hash-guard", "exit": 1, "preserved": True})
     summary = {"status": "passed", "archive": str(archive), "archiveSha256": hashlib.sha256(archive_bytes).hexdigest(),
                "isolatedRoot": str(directory), "python": sys.executable, "executablePath": "empty",
                "pythonIsolatedMode": True, "results": results,

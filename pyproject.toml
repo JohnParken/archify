@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "archify"
-version = "3.0.0"
+version = "3.0.1"
 description = "Pure Python diagram layout, routing, and SVG generation engine for Archify."
 readme = "archify/python/README.md"
 requires-python = ">=3.9"
@@ -21,6 +21,7 @@ archify = "archify_runtime.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["archify/python"]
+exclude = ["tests", "tests.*"]
 
 [tool.setuptools.package-data]
 archify_runtime = [

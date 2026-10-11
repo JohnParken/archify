@@ -35,7 +35,7 @@ def load_cli():
 
 class NativeDeliveryTests(unittest.TestCase):
     def setUp(self):
-        self.temp = tempfile.TemporaryDirectory(prefix="archify-native-delivery-", dir=str(Path("/tmp").resolve()))
+        self.temp = tempfile.TemporaryDirectory(prefix="archify-native-delivery-", dir=str(Path(tempfile.gettempdir()).resolve()))
         self.dir = Path(self.temp.name).resolve()
 
     def tearDown(self):

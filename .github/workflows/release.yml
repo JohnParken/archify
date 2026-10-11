@@ -9,92 +9,81 @@ permissions:
 
 jobs:
   windows-test-portability:
-    name: Windows path contracts (Node ${{ matrix.node-version }})
+    name: Windows Python release gate (Python ${{ matrix.python-version }})
     strategy:
       fail-fast: false
       matrix:
-        node-version: [22, 24]
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+      - uses: actions/setup-python@v6
+        id: setup-python
         with:
-          node-version: ${{ matrix.node-version }}
-      - name: Install test dependencies
-        run: npm ci --ignore-scripts
-        working-directory: archify
-      - name: Provision controlled Windows path fixtures
+          python-version: ${{ matrix.python-version }}
+      - name: Install declared runtime and build requirements
         shell: pwsh
-        run: scripts/windows-path-fixtures.ps1 -NodeVersion '${{ matrix.node-version }}'
-      - name: Verify maintained Windows path contracts
-        run: node scripts/run-windows-path-tests.mjs
+        run: |
+          & $env:PYTHON_PATH -m pip install -r archify/python/requirements.txt -r archify/python/requirements-build.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         env:
-          ARCHIFY_REQUIRE_WINDOWS_8DOT3: '1'
-          ARCHIFY_REQUIRE_WINDOWS_REAL_PATHS: '1'
-      - name: Clean up controlled Windows path fixtures
-        if: ${{ always() }}
+          PYTHON_PATH: ${{ steps.setup-python.outputs.python-path }}
+      - name: Run static Python tests
         shell: pwsh
-        run: scripts/windows-path-fixtures.ps1 -NodeVersion '${{ matrix.node-version }}' -Cleanup
+        run: |
+          & $env:PYTHON_PATH -B scripts/run_tests.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        env:
+          PYTHON_PATH: ${{ steps.setup-python.outputs.python-path }}
+          ARCHIFY_PYTHON: ${{ steps.setup-python.outputs.python-path }}
+      - name: Build and install wheel and source distribution
+        shell: pwsh
+        run: |
+          $distDir = Join-Path $env:RUNNER_TEMP 'archify-dist'
+          New-Item -ItemType Directory -Path $distDir -Force | Out-Null
+          & $env:PYTHON_PATH -m build --no-isolation --sdist --wheel --outdir $distDir
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $wheel = @(Get-ChildItem -Path $distDir -Filter 'archify-*.whl')
+          $sourceDistribution = @(Get-ChildItem -Path $distDir -Filter 'archify-*.tar.gz')
+          if ($wheel.Count -ne 1 -or $sourceDistribution.Count -ne 1) { throw 'Expected one wheel and one source distribution.' }
+          & $env:PYTHON_PATH -m pip install --no-deps $wheel[0].FullName
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $env:PYTHON_PATH -m pip install --no-deps --force-reinstall $sourceDistribution[0].FullName
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Push-Location $env:RUNNER_TEMP
+          archify --help | Out-Null
+          $exitCode = $LASTEXITCODE
+          Pop-Location
+          if ($exitCode -ne 0) { exit $exitCode }
+        env:
+          PYTHON_PATH: ${{ steps.setup-python.outputs.python-path }}
 
   release:
     needs: windows-test-portability
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-      - name: Fetch exact tag object
+      - name: Fetch the exact tag object
         shell: bash
         run: git fetch --force --no-tags origin "+refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}"
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: archify/package-lock.json
-      - name: Install renderer dependencies
-        run: npm ci
-        working-directory: archify
-      - name: Tests must pass before releasing
-        run: npm test
-        working-directory: archify
-      - name: Provision a known Chrome runtime
-        id: setup-chrome
-        uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4 # v2.2.0
+      - uses: actions/setup-python@v6
+        id: setup-python
         with:
-          chrome-version: stable
-          install-dependencies: true
-      - name: Install the WebM decoder
-        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y ffmpeg
-      - name: WebM export must contain distinct decoded frames
-        run: npm run test:webm
-        working-directory: archify
+          python-version: '3.13'
+      - name: Install declared Python runtime and build requirements
+        run: >-
+          "$PYTHON_PATH" -m pip install -r archify/python/requirements.txt -r archify/python/requirements-build.txt
         env:
-          ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
-      - name: Run shared browser regression gate
-        run: npm run test:browser
-        working-directory: archify
-        env:
-          ARCHIFY_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
-          ARCHIFY_CHROME_NO_SANDBOX: '1'
-      - name: Tag must match package.json version
-        run: |
-          pkg_version="$(node -p "require('./archify/package.json').version")"
-          tag="${GITHUB_REF_NAME#v}"
-          if [ "$pkg_version" != "$tag" ]; then
-            echo "::error::tag v$tag does not match archify/package.json version $pkg_version"
-            exit 1
-          fi
-      - name: Classify stable and prerelease tags
+          PYTHON_PATH: ${{ steps.setup-python.outputs.python-path }}
+      - name: Check release tag and distribution identity
         id: release-kind
-        shell: bash
-        run: |
-          version="${GITHUB_REF_NAME#v}"
-          channel="$(node --input-type=module -e 'import fs from "node:fs"; import { validateLocalRelease } from "./archify/scripts/update-contract.mjs"; const release = validateLocalRelease(JSON.parse(fs.readFileSync("./archify/skill-release.json", "utf8"))); if (release.version !== process.argv[1]) process.exit(1); process.stdout.write(release.channel);' "$version")"
-          if [[ "$channel" == "development" ]]; then
-            echo "prerelease=true" >> "$GITHUB_OUTPUT"
-            echo "make_latest=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "prerelease=false" >> "$GITHUB_OUTPUT"
-            echo "make_latest=true" >> "$GITHUB_OUTPUT"
-          fi
+        run: >-
+          "$PYTHON_PATH" scripts/check-release-identity.py --tag "$GITHUB_REF_NAME" --github-output "$GITHUB_OUTPUT"
+        env:
+          PYTHON_PATH: ${{ steps.setup-python.outputs.python-path }}
       - name: Stable release tag must be annotated
         if: steps.release-kind.outputs.prerelease == 'false'
         shell: bash
@@ -103,31 +92,97 @@ jobs:
             echo "::error::stable releases require an annotated tag: ${GITHUB_REF_NAME}"
             exit 1
           fi
-      - name: Stable notifier manifest must remain on the previous release
+      - name: Stable notifier manifest must remain below the release version
         if: steps.release-kind.outputs.prerelease == 'false'
+        shell: bash
+        env:
+          PYTHON_PATH: ${{ steps.setup-python.outputs.python-path }}
+          RELEASE_VERSION: ${{ steps.release-kind.outputs.version }}
         run: |
-          node --input-type=module -e '
-            import fs from "node:fs";
-            import { compareSemver, validateStableUpdateManifest } from "./archify/scripts/update-contract.mjs";
-            const releasing = process.argv[1];
-            const published = validateStableUpdateManifest(JSON.parse(fs.readFileSync("./docs/skill-updates/archify/stable.json", "utf8")));
-            if (compareSemver(published.version, releasing) >= 0) {
-              console.error(`::error::stable.json must remain below v${releasing} until its GitHub Release exists; publish the manifest in a follow-up commit`);
-              process.exit(1);
-            }
-          ' "${GITHUB_REF_NAME#v}"
-      - name: Build skill archive
-        run: scripts/build-zip.sh /tmp/archify-built.zip
-      - name: Validate the exact release archive without installing dependencies
+          "$PYTHON_PATH" - <<'PY'
+          import json
+          import os
+          import re
+          from pathlib import Path
+          published = json.loads(Path('docs/skill-updates/archify/stable.json').read_text(encoding='utf-8'))
+          released = os.environ['RELEASE_VERSION']
+          version_re = re.compile(r'^(\d+)\.(\d+)\.(\d+)$')
+          current_match = version_re.fullmatch(published.get('version', ''))
+          release_match = version_re.fullmatch(released)
+          if not current_match or not release_match:
+              raise SystemExit('stable manifest and release must use stable semantic versions')
+          current = tuple(map(int, current_match.groups()))
+          target = tuple(map(int, release_match.groups()))
+          if current >= target:
+              raise SystemExit(f'stable.json must remain below v{released} until the GitHub Release exists; publish the manifest in a follow-up commit')
+          PY
+      - name: Run maintained Node packaging tests and Viewer source check
+        run: |
+          node --test scripts/test/*.test.mjs
+          node scripts/generate-viewer.mjs --check
+      - name: Run the Python test suite
+        run: >-
+          "$PYTHON_PATH" -B scripts/run_tests.py
+        env:
+          PYTHON_PATH: ${{ steps.setup-python.outputs.python-path }}
+          ARCHIFY_PYTHON: ${{ steps.setup-python.outputs.python-path }}
+      - name: Build and install the wheel and source distribution
+        shell: bash
         run: |
           set -euo pipefail
-          package_root="$RUNNER_TEMP/archify-release-package"
-          mkdir -p "$package_root"
-          unzip -q /tmp/archify-built.zip -d "$package_root"
-          node scripts/package-smoke.mjs "$package_root/archify"
-      - name: Committed zip must match the build (same gate as CI)
-        run: cmp -s /tmp/archify-built.zip archify.zip
-      - name: Create GitHub Release with the zip attached
+          dist_dir="$RUNNER_TEMP/archify-dist"
+          mkdir -p "$dist_dir"
+          "$PYTHON_PATH" -m build --no-isolation --sdist --wheel --outdir "$dist_dir"
+          "$PYTHON_PATH" -m pip install --no-deps "$dist_dir"/archify-*.whl
+          "$PYTHON_PATH" -m pip install --no-deps --force-reinstall "$dist_dir"/archify-*.tar.gz
+          cd "$RUNNER_TEMP"
+          archify --help > /dev/null
+        env:
+          PYTHON_PATH: ${{ steps.setup-python.outputs.python-path }}
+      - name: Install the declared browser requirements
+        run: >-
+          "$PYTHON_PATH" -m pip install -r archify/python/requirements-browser.txt
+        env:
+          PYTHON_PATH: ${{ steps.setup-python.outputs.python-path }}
+      - name: Install Chromium and Linux browser dependencies
+        run: >-
+          "$PYTHON_PATH" -m playwright install --with-deps chromium
+        env:
+          PYTHON_PATH: ${{ steps.setup-python.outputs.python-path }}
+      - name: Install the WebM decoder
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y ffmpeg
+      - name: Run the real Chromium Viewer regression gate
+        run: >-
+          "$PYTHON_PATH" -B -m unittest discover -s archify/python/tests -p "test_native*browser.py" -v
+        env:
+          PYTHON_PATH: ${{ steps.setup-python.outputs.python-path }}
+          ARCHIFY_PYTHON: ${{ steps.setup-python.outputs.python-path }}
+          ARCHIFY_BROWSER_TESTS: '1'
+          ARCHIFY_BROWSER_TEST_OUT: ${{ runner.temp }}
+          PYTHONPATH: archify/python
+      - name: Verify WebM export decodes to distinct frames
+        run: >-
+          "$PYTHON_PATH" -B -m unittest discover -s archify/python/tests -p test_native_webm_browser.py -v
+        env:
+          PYTHON_PATH: ${{ steps.setup-python.outputs.python-path }}
+          ARCHIFY_PYTHON: ${{ steps.setup-python.outputs.python-path }}
+          ARCHIFY_WEBM_TESTS: '1'
+          ARCHIFY_WEBM_TEST_OUT: ${{ runner.temp }}
+          PYTHONPATH: archify/python
+      - name: Rebuild the canonical archive and compare SHA-256
+        shell: bash
+        run: |
+          set -euo pipefail
+          fresh_archive="$RUNNER_TEMP/archify-built.zip"
+          scripts/build-zip.sh "$fresh_archive"
+          committed_sha="$(sha256sum archify.zip | cut -d ' ' -f 1)"
+          fresh_sha="$(sha256sum "$fresh_archive" | cut -d ' ' -f 1)"
+          if [[ "$committed_sha" != "$fresh_sha" ]]; then
+            echo "::error::committed archify.zip does not match the canonical build (committed $committed_sha, rebuilt $fresh_sha)"
+            exit 1
+          fi
+          "$PYTHON_PATH" scripts/package-smoke.py "$fresh_archive"
+      - name: Create GitHub Release with the committed ZIP attached
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           files: archify.zip

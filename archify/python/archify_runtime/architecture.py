@@ -521,6 +521,13 @@ class ArchitectureRenderer:
         brand = resolve_brand(component.get("brand"))
         brand_svg = render_brand_mark(brand, component["x"] + component["width"] - 22, component["y"] + 6)
         label_size = fitted_node_font_size(component.get("label"), brand_label_fit_width(component, component["width"], brand), 11, 8)
+        beacon_left = component["x"] + component["width"] - 42 - (22 if brand else 0)
+        label_right = cx + text_units(component.get("label", "")) * label_size * 0.3
+        if (component.get("sources") and label_y - label_size < component["y"] + 17.5
+                and label_y > component["y"] + 4.5 and label_right > beacon_left):
+            raise DiagnosticError("Component does not reserve room for its source badge.", [diagnostic(
+                "source-evidence/node-footprint", "Component does not reserve room for its source badge.",
+                {"nodeId": component.get("id")}, supported_fixes=["increase authored component height or width to reserve a separate source badge rail"] )])
         passport = {"kind": component.get("type"), "sublabel": component.get("sublabel"), "tag": component.get("tag"),
                     "context": self.connection_context(component), **brand_metadata(brand)}
         brand_markup = f"\n          {brand_svg}" if brand_svg else ""

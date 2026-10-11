@@ -347,7 +347,8 @@ class DataflowRenderer:
             text_rows.append({"text": node["sublabel"], "font": sub_font, "y": 37})
         if node.get("tag"):
             text_rows.append({"text": node["tag"], "font": tag_font, "y": node["height"] - 11})
-        label_layout = node_label_layout(node["width"], node["height"], text_rows, brand=bool(mark), source=False)
+        label_layout = node_label_layout(node["width"], node["height"], text_rows,
+                                         brand=bool(mark), source=bool(node.get("sources")))
         sub = (f'\n          <text data-detail="context" x="{_num(node["cx"])}" y="{_num(node["y"] + label_layout["ys"][1])}" '
                f'class="t-muted" font-size="{_num(sub_font)}" text-anchor="middle">{esc(node["sublabel"])}</text>') if has_sublabel else ""
         tag_index = 2 if has_sublabel else 1

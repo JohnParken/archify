@@ -24,11 +24,17 @@ export function createCommunityFixture() {
   // replacing only the community registry. Do not copy arbitrary untracked files.
   const tracked = execFileSync('git', ['ls-files', '-z', '--',
     'website/src/', 'website/public/', 'website/astro.config.mjs', 'website/scripts/', 'website/package.json',
-    'archify/package.json', 'archify/skill-release.json', 'archify/recipes/',
-    'scripts/site-copy.mjs', 'scripts/check-community-packages.mjs',
+    'archify/skill-release.json',
     'docs/gallery/', 'docs/assets/', 'docs/cases/life/'], { cwd: repoRoot, encoding: 'utf8' })
     .split('\0').filter(Boolean);
   for (const relative of tracked) copy(relative);
+  for (const relative of [
+    'website/src/data/community-packages.mjs',
+    'website/src/data/diagram-types.mjs',
+    'website/src/data/scenarios.mjs',
+  ]) {
+    if (!tracked.includes(relative)) copy(relative);
+  }
   fs.symlinkSync(path.join(websiteRoot, 'node_modules'), path.join(root, 'website/node_modules'), process.platform === 'win32' ? 'junction' : 'dir');
   const publicRoot = path.join(root, 'website/.public');
   fs.mkdirSync(publicRoot, { recursive: true });

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
-import { ChromeVisualBrowser, findChrome } from '../../archify/bin/visual-check.mjs';
+import { ChromeVisualBrowser, findChrome } from './helpers/chrome-browser.mjs';
 import { createCommunityFixture, payload, websiteRoot } from './helpers/community-fixture.mjs';
 
 const integrationEnabled = process.env.ARCHIFY_SITE_INTEGRATION === '1';

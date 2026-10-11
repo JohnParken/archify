@@ -1,8 +1,8 @@
 """Skill-only Hermes plugin for Archify.
 
 Registers the packaged Archify SKILL.md. It does not add native render tools,
-network, credentials, or a Python rewrite of the Node compiler. Hermes follows
-the skill and runs `node bin/archify.mjs` through its ordinary terminal tool.
+network or credentials. Diagram compilation uses the native Python runtime. Hermes follows
+the skill and runs `python3 bin/archify.py` through its ordinary terminal tool.
 """
 
 from __future__ import annotations

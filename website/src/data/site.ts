@@ -1,9 +1,9 @@
-import packageJson from '../../../archify/package.json';
+import release from '../../../archify/skill-release.json';
 import manifest from '../../../docs/gallery/manifest.json';
-import { publicGuideData, SCENARIO_RECIPES, startPromptsFor } from '../../../archify/recipes/scenarios.mjs';
+import { publicGuideData, SCENARIO_RECIPES, startPromptsFor } from './scenarios.mjs';
 import { CASES } from './gallery-presentation.mjs';
 
-export const version = packageJson.version;
+export const version = release.version;
 export const guide = publicGuideData();
 export const gallery = manifest;
 export const cards = CASES.map(item => {

@@ -22,7 +22,7 @@ class NativeModeCliTests(unittest.TestCase):
     def setUp(self):
         if not PYTHON.is_file():
             self.skipTest(f"prototype interpreter is not installed: {PYTHON}")
-        self.temp = tempfile.TemporaryDirectory(prefix="archify-modes-", dir=str(Path("/tmp").resolve()))
+        self.temp = tempfile.TemporaryDirectory(prefix="archify-modes-", dir=str(Path(tempfile.gettempdir()).resolve()))
         self.dir = Path(self.temp.name)
 
     def tearDown(self):

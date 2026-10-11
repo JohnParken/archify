@@ -168,8 +168,11 @@ def verify_bytes(input_path, output, specification, artifact):
 
 
 def check_delivery(input_path, output, diagram_type, quality=None):
-    output = Path(output)
-    for marker in (output.parent / ".archify-delivery-lock.json", output.with_suffix(".delivery-pending.json")):
+    from .output import canonical_path
+    input_path = canonical_path(input_path)
+    output = canonical_path(output)
+    from .delivery import sidecar
+    for marker in (output.parent / ".archify-delivery-lock.json", sidecar(output, ".delivery-pending.json")):
         if marker.exists() or marker.is_symlink():
             fail("integrity/delivery-in-progress", "Delivery or recovery must finish before checking.", marker)
     path = receipt_path(output)
@@ -179,7 +182,8 @@ def check_delivery(input_path, output, diagram_type, quality=None):
         fail("integrity/receipt-invalid", "Invalid Python delivery receipt.", path)
     if (not isinstance(receipt, dict) or receipt.get("deliveryContract") != CONTRACT
             or receipt.get("schemaVersion") != 1 or receipt.get("type") != diagram_type
-            or receipt.get("input") != str(Path(input_path).absolute())
+            or not isinstance(receipt.get("input"), str)
+            or canonical_path(receipt["input"]) != input_path
             or receipt.get("output") != str(output.absolute())
             or not isinstance(receipt.get("artifactIntegrity"), dict)
             or receipt["artifactIntegrity"].get("status") != "passed"

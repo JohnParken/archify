@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse } from 'parse5';
 import { CASES } from '../src/data/gallery-presentation.mjs';
-import { publicGuideData, SCENARIO_RECIPES, startPromptsFor } from '../../archify/recipes/scenarios.mjs';
+import { publicGuideData, SCENARIO_RECIPES, startPromptsFor } from '../src/data/scenarios.mjs';
 
 const root = process.env.ARCHIFY_SITE_ROOT || fileURLToPath(new URL(process.env.ARCHIFY_SITE_TARGET === 'cloudflare' ? '../dist-cloudflare/' : '../dist/', import.meta.url));
 const cloudflare = process.env.ARCHIFY_SITE_TARGET === 'cloudflare' || path.basename(root) === 'dist-cloudflare';
@@ -45,7 +45,7 @@ for (const lang of ['en', 'zh']) {
         recipe[lang].useWhen, recipe[lang].avoidWhen, recipe[lang].prompt, ...recipe[lang].include]) {
         assert.ok(content.includes(clean(value)), `${recipe.id}: missing initial ${lang} copy: ${value}`);
       }
-      assert.ok(links(article).some(link => /github\.com\/tt-a1i\/archify\/blob\/(?:dev|main)\/archify\/recipes\/scenarios\.mjs$/.test(attr(link, 'href'))));
+      assert.ok(links(article).some(link => /github\.com\/tt-a1i\/archify\/blob\/(?:dev|main)\/website\/src\/data\/scenarios\.mjs$/.test(attr(link, 'href'))));
       if (recipe.proof) {
         const proofLink = links(article).find(link => new URL(attr(link, 'href'), 'https://example.test/').hash === `#proof-${recipe.proof}`);
         assert.ok(proofLink, `missing proof link for ${recipe.id}`);

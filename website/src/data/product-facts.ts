@@ -5,4 +5,4 @@ import release from '../../../archify/skill-release.json';
 export const productVersion = release.version;
 export const productChannel = release.channel === 'development' ? 'development' : 'stable';
 export const sourceRef = productChannel === 'development' ? 'dev' : 'main';
-export const recipeSourceUrl = `https://github.com/tt-a1i/archify/blob/${sourceRef}/archify/recipes/scenarios.mjs`;
+export const recipeSourceUrl = `https://github.com/tt-a1i/archify/blob/${sourceRef}/website/src/data/scenarios.mjs`;

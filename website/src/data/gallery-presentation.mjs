@@ -1,4 +1,4 @@
-import { DIAGRAM_TYPE_LABELS } from '../../../scripts/site-copy.mjs';
+import { DIAGRAM_TYPE_LABELS } from './diagram-types.mjs';
 
 export const CASES = [
   {

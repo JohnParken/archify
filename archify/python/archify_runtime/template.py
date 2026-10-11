@@ -26,7 +26,7 @@ def render_cards(cards):
     return '    <!-- Info Cards -->\n    <div class="cards">\n' + "\n\n".join(items) + '\n    </div>'
 
 
-def apply_template(template, diagram, svg):
+def apply_template(template, diagram, svg, evidence=None):
     meta = diagram["meta"]
     messages = catalog(meta)
     template = re.sub(r"\{\{i18n:([a-zA-Z0-9_.-]+)\}\}", lambda m: esc(translate(meta, m[1])), template)
@@ -36,7 +36,7 @@ def apply_template(template, diagram, svg):
         '<title>[PROJECT NAME] Architecture Diagram</title>': f'<title>{esc(translate(meta, "page.title", {"title": meta["title"]}))}</title>',
         '<h1>[PROJECT NAME] Architecture</h1>': f'<h1>{esc(meta["title"])}</h1>',
         '    <!-- ARCHIFY:I18N_DATA -->': '    <script id="archify-i18n-data" type="application/json">' + script_json({"locale": locale, "messages": {k: v for k, v in messages.items() if k.startswith("viewer.")}}) + '</script>',
-        '    <!-- ARCHIFY:SOURCE_EVIDENCE_DATA -->': '',
+        '    <!-- ARCHIFY:SOURCE_EVIDENCE_DATA -->': ('    <script id="archify-source-evidence-data" type="application/json">' + script_json(evidence) + '</script>') if evidence else '',
     }
     for source, replacement in replacements.items():
         if source not in template:

@@ -13,7 +13,7 @@ Archify has **no in-process plugin API, and none is planned for this registry**.
 | Type | Contents | Example |
 | --- | --- | --- |
 | `skill` | Agent skill pack: SKILL.md, reference docs, examples for a domain | "Archify for Kubernetes" |
-| `recipe` | Scenario/recipe library (the shape of `archify/recipes/scenarios.mjs`) | E-commerce architecture scenarios |
+| `recipe` | Scenario/recipe library (the shape of `website/src/data/scenarios.mjs`) | E-commerce architecture scenarios |
 | `brand-marks` | Brand-mark catalog or visual preset | Corporate identity pack |
 | `locale` | `meta.translations` catalog | Community-maintained language |
 | `wrapper` | Standalone tool that emits Archify JSON IR and calls the CLI | Terraform state → diagram |

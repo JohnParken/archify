@@ -3,15 +3,15 @@
 import json
 import re
 import unicodedata
-from pathlib import Path
 
 import math
 from jsonschema import Draft202012Validator, validators
 from referencing import Registry, Resource
 
 from .common import DiagnosticError, diagnostic, problems, get_data, js_round, record_diagnostic
+from .resources import get_resource_root
 
-SKILL_ROOT = Path(__file__).resolve().parents[2]
+SKILL_ROOT = get_resource_root()
 COLLECTIONS = {
     "sequence": ("participants", "messages"),
     "dataflow": ("nodes", "flows"),
@@ -184,12 +184,9 @@ def validate_document(diagram, diagram_type="sequence"):
              {"diagramType": diagram_type, "collection": relationships})
     from .engineering import validate_engineering_profile
     validate_engineering_profile(diagram_type, diagram)
-    if diagram["meta"].get("repository") or any(node.get("sources") for node in diagram[nodes]):
-        fail("python/unsupported-feature", "Repository evidence is not yet implemented in the Python prototype.",
-             {"diagramType": diagram_type, "feature": "repository-evidence"}, fixes=["use the existing Node CLI for repository-backed diagrams"])
     if any(isinstance(node.get("brand"), dict) for node in diagram[nodes]):
         fail("python/unsupported-feature", "Remote digest-pinned brand capture is not yet implemented in the Python prototype.",
-             {"diagramType": diagram_type, "feature": "remote-brand"}, fixes=["use a built-in brand ID or the existing Node CLI"])
+             {"diagramType": diagram_type, "feature": "remote-brand"}, fixes=["use a built-in brand ID"])
     from .drawing import resolve_brand
     brand_errors = []
     for index, node in enumerate(diagram[nodes]):
@@ -206,6 +203,6 @@ def validate_document(diagram, diagram_type="sequence"):
         code = "brand/unpinned-url" if unpinned else "brand/unknown"
         message = f'/{nodes}/{index}/brand {json.dumps(value)} ' + ("is an unpinned URL" if unpinned else "is not a built-in brand")
         brand_errors.append(diagnostic(code, message, {"diagramType": diagram_type, "collection": nodes},
-            supported_fixes=["choose a built-in brand ID; use the Node CLI for remote capture"]))
+            supported_fixes=["choose a built-in brand ID"]))
     if brand_errors:
         raise DiagnosticError("Brand mark validation failed", brand_errors)

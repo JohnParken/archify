@@ -2,9 +2,9 @@
 // single source of truth; this page never hand-copies package metadata.
 // import.meta.glob is resolved by Vite at build time relative to this source
 // file, so the catalog cannot drift from the registry.
-import { validatePackageEntries } from '../../../scripts/check-community-packages.mjs';
+import { PACKAGE_TYPES as VALIDATOR_PACKAGE_TYPES, validatePackageEntries } from './community-packages.mjs';
 
-export const PACKAGE_TYPES = ['skill', 'recipe', 'brand-marks', 'locale', 'wrapper'] as const;
+export const PACKAGE_TYPES = VALIDATOR_PACKAGE_TYPES as readonly ['skill', 'recipe', 'brand-marks', 'locale', 'wrapper'];
 export type PackageType = (typeof PACKAGE_TYPES)[number];
 
 export interface CommunityPackage {

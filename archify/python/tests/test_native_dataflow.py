@@ -18,7 +18,7 @@ EXAMPLES = ARCHIFY / "examples"
 
 class NativeDataflowTests(unittest.TestCase):
     def setUp(self):
-        self.scratch = tempfile.TemporaryDirectory(prefix="archify-native-dataflow-", dir=str(Path("/tmp").resolve()))
+        self.scratch = tempfile.TemporaryDirectory(prefix="archify-native-dataflow-", dir=str(Path(tempfile.gettempdir()).resolve()))
         self.tmp = Path(self.scratch.name)
 
     def tearDown(self):

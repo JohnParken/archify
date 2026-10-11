@@ -16,7 +16,7 @@ FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
 class NativeLifecycleTests(unittest.TestCase):
     def setUp(self):
-        self.scratch = tempfile.TemporaryDirectory(prefix="archify-native-lc-arch-lifecycle-", dir=str(Path("/tmp").resolve()))
+        self.scratch = tempfile.TemporaryDirectory(prefix="archify-native-lc-arch-lifecycle-", dir=str(Path(tempfile.gettempdir()).resolve()))
         self.tmp = Path(self.scratch.name)
 
     def tearDown(self):
