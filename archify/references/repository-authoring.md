@@ -1,5 +1,12 @@
 # Repository-backed architecture authoring
 
+## Contents
+
+- [Explore on demand](#explore-on-demand)
+- [Choose an example by structure](#choose-an-example-by-structure)
+- [Author from evidence](#author-from-evidence)
+
+
 Use this reference when a diagram must explain a real repository. The source is
 the authority for responsibilities, calls, boundaries, and persistence. The
 diagram is complete when the requested meaning is covered and every asserted

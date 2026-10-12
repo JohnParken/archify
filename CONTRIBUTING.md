@@ -117,11 +117,22 @@ The native Python package stager reads tracked working-tree files and index mode
 excluding tests, caches and development dependencies. Its explicit new-file
 allowlist is maintained in `scripts/stage-clean-skill.mjs` and covers the named
 Python runtime migration additions, the Node compatibility launcher and optional
-browser requirements before their first commit. Keep it limited to those exact
+browser requirements and explicitly named Skill references before their first commit. Keep it limited to those exact
 paths; arbitrary untracked files are never included. It materializes
 only the canonical `bin/archify -> archify.py` alias as a regular executable;
 other source symlinks are rejected. ZIP entry names, modes and timestamps are
 deterministic. Build-tool dependencies are not needed by the extracted Skill.
+
+The ZIP builder runs `scripts/check-skill-package.mjs` on the staged Skill
+before publication. This gate checks the repository's small YAML mapping profile
+(JSON double-quoted or simple plain scalar values), name/description length,
+the 500-line body limit, relative resource links and anchors, reference navigation,
+Python runtime requirements, and package hygiene.
+Run `node --test scripts/test/*.test.mjs` for its positive and negative regressions.
+Keep development READMEs and the legacy brand build catalogue in the repository;
+they are excluded from the Skill. Runtime brand provenance remains bundled.
+The checker permits attribution and repository-identity URLs; it does not fetch them
+or establish model instruction-following or browser acceptance.
 
 For native package acceptance, use an interpreter with the Skill's declared
 Python requirements installed:

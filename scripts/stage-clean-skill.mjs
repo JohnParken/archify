@@ -13,8 +13,9 @@ const EXTRA_RUNTIME_FILES = ['archify/python/archify_runtime/browser.py', 'archi
   'archify/python/archify_runtime/delivery.py', 'archify/python/archify_runtime/repository.py',
   'archify/python/archify_runtime/comparison.py', 'archify/python/archify_runtime/commands.py',
   'archify/bin/archify.mjs', 'archify/python/requirements-browser.txt'];
+const EXTRA_REFERENCE_FILES = ['archify/references/schema-guide.md', 'archify/references/input-safety.md'];
 const EXCLUDED_SEGMENTS = new Set(['test', 'tests', '__pycache__', 'node_modules', '.DS_Store', '.hive', '.workbuddy', '.archify']);
-const EXCLUDED_FILES = new Set(['archify/package-lock.json', 'archify/python/requirements-build.txt', 'archify/scripts/generate-brand-marks.mjs', 'archify/scripts/generate-validators.mjs']);
+const EXCLUDED_FILES = new Set(['archify/brand-marks/catalog.json', 'archify/package-lock.json', 'archify/python/requirements-build.txt', 'archify/scripts/generate-brand-marks.mjs', 'archify/scripts/generate-validators.mjs']);
 const REQUIRED = ['archify/SKILL.md', 'archify/LICENSE', 'archify/THIRD_PARTY_NOTICES.md', 'archify/skill-release.json'];
 
 function trackedEntries(root) {
@@ -34,6 +35,7 @@ export function stageCleanSkill({ repoRoot, destination, modeManifest = null }) 
   const root = fs.realpathSync(repoRoot);
   const entries = trackedEntries(root).filter(({ relative }) => !EXCLUDED_FILES.has(relative)
     && !relative.split('/').some(part => EXCLUDED_SEGMENTS.has(part) || part.startsWith('.validator-check-'))
+    && !/^readme(?:\..*)?$/i.test(path.basename(relative))
     && !relative.endsWith('.pyc') && !relative.endsWith('.pyo'));
   const indexed = new Map(entries.map(entry => [entry.relative, entry]));
   const python = indexed.has('archify/bin/archify.py');
@@ -42,6 +44,10 @@ export function stageCleanSkill({ repoRoot, destination, modeManifest = null }) 
       entries.push({ relative, mode: '100644' });
       indexed.set(relative, entries.at(-1));
     }
+  }
+  for (const relative of EXTRA_REFERENCE_FILES) if (!indexed.has(relative) && fs.existsSync(path.join(root, relative))) {
+    entries.push({ relative, mode: '100644' });
+    indexed.set(relative, entries.at(-1));
   }
   const required = python ? [...REQUIRED, 'archify/bin/archify.py', 'archify/python/requirements.txt',
     'archify/assets/template.html', 'archify/schemas/common.schema.json', ...EXTRA_RUNTIME_FILES] : REQUIRED;

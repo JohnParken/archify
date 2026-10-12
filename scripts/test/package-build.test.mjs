@@ -38,6 +38,10 @@ function fixture() {
     'archify/examples/hello.md': 'example\n',
     'archify/modules/core.md': 'module\n',
     'archify/tests/should-not-ship.py': 'test\n',
+    'archify/python/README.md': 'development usage\n',
+    'archify/schemas/README.md': 'schema maintenance\n',
+    'archify/brand-marks/README.md': 'brand maintenance\n',
+    'archify/brand-marks/catalog.json': '{"legacyBuildInput":true}\n',
     'archify/python/archify_runtime/__pycache__/stale.pyc': 'cache\n',
   })) {
     const file = path.join(root, relative);
@@ -68,7 +72,7 @@ test('stages tracked package files, excludes tests/cache and ignores untracked p
   assert.ok(result.fileCount >= 6);
   assert.equal(fs.readFileSync(path.join(destination, 'examples/hello.md'), 'utf8'), 'example\n');
   assert.equal(fs.readFileSync(path.join(destination, 'modules/core.md'), 'utf8'), 'module\n');
-  for (const excluded of ['tests/should-not-ship.py', 'python/archify_runtime/__pycache__/stale.pyc', 'private.txt', 'external-link']) {
+  for (const excluded of ['brand-marks/catalog.json', 'python/README.md', 'schemas/README.md', 'brand-marks/README.md', 'tests/should-not-ship.py', 'python/archify_runtime/__pycache__/stale.pyc', 'private.txt', 'external-link']) {
     assert.equal(fs.existsSync(path.join(destination, excluded)), false, excluded);
   }
 });

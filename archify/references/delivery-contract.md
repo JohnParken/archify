@@ -1,5 +1,20 @@
 # Delivery contract
 
+## Contents
+
+- [Validate and deliver](#validate-and-deliver)
+- [Receipts and integrity](#receipts-and-integrity)
+- [Publication and repeated delivery](#publication-and-repeated-delivery)
+- [Browser policy](#browser-policy)
+- [Automated browser evidence](#automated-browser-evidence)
+- [Failed finalize and candidate repair](#failed-finalize-and-candidate-repair)
+- [Output path contracts](#output-path-contracts)
+- [Sequence width review](#sequence-width-review)
+- [Optional capture evidence](#optional-capture-evidence)
+- [Optional opening](#optional-opening)
+- [Handoff receipt](#handoff-receipt)
+
+
 This contract describes the current Python CLI, including browser-free LangChain DeepAgent containers. Static validation and byte integrity are mandatory for generated HTML; browser inspection is a separate policy-controlled stage. A static success is not browser or perceptual acceptance.
 
 ## Validate and deliver

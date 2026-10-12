@@ -36,6 +36,8 @@ node "$repo_root/scripts/stage-clean-skill.mjs" \
   --dest "$stage/archify" \
   --mode-manifest "$stage/modes.json" >/dev/null
 
+node "$repo_root/scripts/check-skill-package.mjs" "$stage/archify"
+
 # Entry modes come from the recorded Git index modes, not from stat(), so the
 # archive bytes do not depend on the building platform's permission support.
 node "$repo_root/scripts/write-deterministic-zip.mjs" "$stage/archify" "$out" \

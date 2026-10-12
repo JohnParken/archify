@@ -1,6 +1,24 @@
 # Authoring contract
 
-Read this reference only after the Fast authoring path calls for more detail. The schemas and examples remain authoritative.
+## Contents
+
+- [Composition repair](#composition-repair)
+- [Label repair](#label-repair)
+- [Schema lookup](#schema-lookup)
+- [Workflow layout contracts](#workflow-layout-contracts)
+- [Legend contract](#legend-contract)
+- [Language consistency](#language-consistency)
+- [Visual preset default](#visual-preset-default)
+- [Engineering profile default](#engineering-profile-default)
+- [Title hierarchy](#title-hierarchy)
+- [Executable geometry rules](#executable-geometry-rules)
+- [Mode placement](#mode-placement)
+- [Repository evidence](#repository-evidence)
+- [Hand-placed fallback](#hand-placed-fallback)
+- [Node icons](#node-icons)
+
+
+Read this reference when Generation or Authoring defaults calls for more detail. The schemas and examples remain authoritative.
 
 ## Composition repair
 
@@ -27,10 +45,11 @@ Do not invent fields. Before writing any new field, enum, or constrained text, r
 Use schema v2 for new workflows and keep schema v1 when an existing source must
 retain fixed geometry. In both versions, `col` stays in `0..5` and semantic
 edge labels are never deleted as a spacing repair. Do not change only
-`schema_version` when absolute coordinates exist: follow the canonical
-[migration and layout-receipt contract](../renderers/workflow/README.md#migration-and-layout-receipt).
-The complete normative invariants live in the workflow renderer's
-[layout contracts](../renderers/workflow/README.md#layout-contracts).
+`schema_version` when absolute coordinates exist. Preserve the original v1
+candidate; author a separate v2 candidate, remove stale canvas and route pins,
+and validate the complete result. The Python CLI has no `migrate` command.
+Keep lane, phase, group and main-path semantics; inspect measured diagnostics
+before changing geometry. See [Mode placement](#mode-placement) for viewport repair.
 For sequential stages stacked in one container, use one v2 lane and group,
 omit `meta.viewBox`, and center nodes around the lane content with symmetric
 `yOffset` values such as `-90 / 0 / 90`. Keep semantic edge labels and act on
@@ -77,8 +96,8 @@ request, then prompt order or conversation dominance.
 
 `en` and `zh-CN` are built-in Viewer catalogs and need nothing further. For
 every other `meta.locale`, also set `meta.translations`: an object mapping the
-renderer's canonical message keys (`catalogKeys()` in
-`renderers/shared/i18n.mjs`) to translated strings whose `{placeholder}` tokens
+renderer's canonical English message keys in
+`../python/archify_runtime/data/catalogs.json` to translated strings whose `{placeholder}` tokens
 match the English source exactly. Reuse suitable translations from `examples/locales/` or a previously reviewed
 catalog; Spanish uses `examples/locales/es.json`. Translate missing keys or adapt terminology when the diagram needs it;
 use the English source to check keys and placeholders. Example catalogs may
@@ -322,7 +341,7 @@ active state. A card saying “retry” is not topology.
 
 When the diagram must reflect real code, inspect repository entrypoints,
 runtime boundaries, storage, transports, and deployment configuration before
-authoring. Record only evidence you actually verified. The current Python CLI rejects `meta.repository` and node `sources`, and does not accept `--repo-root`; keep source verification and its citations in separate authoring evidence, outside the runnable candidate.
+authoring. Record only evidence you actually verified. Declare `meta.repository` and node `sources`, and pass `--repo-root <local-checkout>` for committed-source verification.
 Never infer runtime causality from file proximity
 or naming alone.
 
@@ -330,7 +349,7 @@ Declare `meta.repository.url` and one full 40-character `revision`, then attach
 `sources` to the mode's node collection (Architecture `components[]`, Workflow
 and Data Flow `nodes[]`, Sequence `participants[]`, Lifecycle `states[]`) with
 repository-relative `path`, optional `line`, `end_line`, and `label`.
-During authoring, verify the cited blobs at that commit independently of working-tree edits; Python delivery does not perform that verification.
+During authoring, verify the cited blobs at that commit independently of working-tree edits; Python delivery verifies blob identity and ranges; it does not prove that a citation entails the authored claim.
 Verification ignores local Git replacement refs, including those selected by
 `GIT_REPLACE_REF_BASE`, and always reads the original objects at the pinned SHA.
 It does not change repository configuration or delete replacement refs.
