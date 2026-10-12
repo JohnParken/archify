@@ -153,7 +153,7 @@ def _rollback(output, require_dead=False):
         if current(target) == entry.get("old"):
             continue
         if entry.get("old") is None:
-            target.unlink()
+            os.unlink(target)
         else:
             restored = directory / ("restore-" + str(index))
             if restored.exists() or restored.is_symlink():
@@ -202,7 +202,7 @@ def _complete(output, require_dead):
         info = lock.lstat()
         if owner.get("receiptId") != record["receiptId"] or [info.st_dev, info.st_ino] != item["identity"]:
             fail("delivery/ownership-lost", "Lock changed during completion.", lock)
-        lock.unlink()
+        os.unlink(lock)
         flush_directory(lock.parent)
     if directory.exists():
         info = directory.lstat()
@@ -211,7 +211,7 @@ def _complete(output, require_dead):
         shutil.rmtree(directory)
     if read_regular(journal) != raw:
         fail("delivery/ownership-lost", "Journal changed during completion.", journal)
-    journal.unlink()
+    os.unlink(journal)
     flush_directory(journal.parent)
     return {"schemaVersion": 1, "ok": True, "command": "recover", "output": record["output"],
             "receiptId": record["receiptId"], "status": phase}
@@ -348,7 +348,7 @@ def publish_transaction(target, html, expected, receipt_id, receipt, verifier):
                     owner = json.loads(read_regular(lock))
                     info = lock.lstat()
                     if [info.st_dev, info.st_ino] == item["identity"] and owner.get("receiptId") == receipt_id:
-                        lock.unlink()
+                        os.unlink(lock)
                     else:
                         fail("delivery/ownership-lost", "Lock ownership changed; it was preserved.", lock)
                 except FileNotFoundError:

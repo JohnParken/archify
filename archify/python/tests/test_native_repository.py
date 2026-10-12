@@ -32,6 +32,8 @@ def git(root, *args):
 
 class NativeRepositoryTests(unittest.TestCase):
     def setUp(self):
+        if not shutil.which(GIT):
+            self.skipTest(f"git executable not found: {GIT}")
         SCRATCH.mkdir(parents=True, exist_ok=True)
         self.temp = tempfile.TemporaryDirectory(prefix="repository-test-", dir=str(SCRATCH))
         self.scratch = Path(self.temp.name)
